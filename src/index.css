@@ -1,0 +1,42 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold: #D4AF37;
+  --bg: #131313;
+  --card: #1A1A1A;
+  --card2: #111;
+  --border: rgba(255,255,255,0.06);
+  --muted: #555;
+  --green: #2ecc71;
+  --red: #ff3b3b;
+}
+
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--gold); color: #000; }
+input::selection { background: var(--gold); color: #000; }
+
+input[type=range] {
+  width: 100%;
+  height: 3px;
+  background: #000;
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  accent-color: var(--gold);
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid #000;
+  box-shadow: 0 0 8px rgba(212,175,55,0.5);
+}
