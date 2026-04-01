@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move } from 'lucide-react';
+import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader } from 'lucide-react';
 import LOGO_SRC from './FA Logo_weiß.png';
 
 const SUPABASE_URL = 'https://euudeiogircwlvzmsmsr.supabase.co';
@@ -54,6 +54,143 @@ function getQid(sy, imp) {
 }
 const clamp = v => Math.max(3, Math.min(97, v));
 
+async function fetchInstaStats(handle) {
+  const cleanHandle = handle.replace('@', '').trim();
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{
+          role: 'user',
+          content: `Search Social Blade for Instagram user ${cleanHandle}. Return ONLY valid JSON: {"followers":"123K","following":"456","posts":"789","bio":"text","verified":false}. Use K/M for numbers. If not found: {"followers":"N/A","following":"N/A","posts":"N/A","bio":"","verified":false}`
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const jsonMatch = text.match(/\{[^{}]*"followers"[^{}]*\}/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+  } catch(e) {}
+  return null;
+}
+
+function InstaCard({ item, upd }) {
+  const [loading, setLoading] = useState(false);
+  const timerRef = useRef(null);
+  const stats = item.instaStats || null;
+  const handle = (item.instaHandle || '').replace('@','').trim();
+  const profileUrl = handle ? `https://instagram.com/${handle}` : null;
+  const socialBladeUrl = handle ? `https://socialblade.com/instagram/user/${handle}` : null;
+
+  const handleInput = (val) => {
+    const clean = val.replace('@','').trim();
+    upd(item.id, 'instaHandle', val);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (clean.length > 2) {
+      timerRef.current = setTimeout(async () => {
+        setLoading(true);
+        const fetched = await fetchInstaStats(clean);
+        if (fetched) upd(item.id, 'instaStats', fetched);
+        setLoading(false);
+      }, 1500);
+    }
+  };
+
+  const refreshStats = async () => {
+    if (!handle) return;
+    setLoading(true);
+    const fetched = await fetchInstaStats(handle);
+    if (fetched) upd(item.id, 'instaStats', fetched);
+    setLoading(false);
+  };
+
+  return (
+    <div style={{gridColumn:'span 2', borderRadius:'0.8rem', overflow:'hidden', border:'1px solid rgba(225,48,108,0.3)', background:'#0a0a0a'}}>
+      {/* Header */}
+      <div style={{padding:'0.65rem 1rem', display:'flex', alignItems:'center', gap:'0.6rem', borderBottom:'1px solid rgba(255,255,255,0.05)', background:'linear-gradient(90deg,rgba(225,48,108,0.1),transparent)'}}>
+        <div style={{width:24,height:24,borderRadius:'50%',background:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <Instagram size={12} color="#fff"/>
+        </div>
+        <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.62rem',fontWeight:900,color:'#fff',letterSpacing:'0.15em',textTransform:'uppercase'}}>Instagram</span>
+        {loading && <span style={{marginLeft:'auto',fontSize:'0.48rem',color:'#E1306C',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.15em'}}>Lädt...</span>}
+        {!loading && stats && stats.followers !== 'N/A' && <span style={{marginLeft:'auto',fontSize:'0.45rem',color:'#2ecc71',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.2em'}}>● Live</span>}
+        {!loading && handle && (
+          <button onClick={refreshStats} style={{marginLeft: stats ? '0.5rem' : 'auto', background:'none',border:'none',cursor:'pointer',color:'#666',fontSize:'0.45rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',fontFamily:"'Barlow',sans-serif",padding:0}}>
+            ↻ Update
+          </button>
+        )}
+      </div>
+
+      {/* Input row */}
+      <div style={{padding:'0.65rem 1rem', borderBottom: stats ? '1px solid rgba(255,255,255,0.05)' : 'none', display:'flex', alignItems:'center', gap:'0.5rem'}}>
+        <span style={{color:'#E1306C',fontSize:'0.9rem',fontWeight:700,flexShrink:0}}>@</span>
+        <input
+          style={{flex:1,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.4rem',padding:'0.32rem 0.6rem',fontSize:'0.76rem',fontWeight:600,color:'#fff',outline:'none',fontFamily:"'Barlow',sans-serif"}}
+          value={handle}
+          onChange={e => handleInput(e.target.value)}
+          placeholder="username eingeben…"
+        />
+        {profileUrl && (
+          <a href={profileUrl} target="_blank" rel="noopener noreferrer"
+            style={{display:'flex',alignItems:'center',gap:'0.3rem',background:'linear-gradient(45deg,#dc2743,#cc2366)',color:'#fff',textDecoration:'none',padding:'0.32rem 0.65rem',borderRadius:'0.4rem',fontSize:'0.58rem',fontWeight:700,whiteSpace:'nowrap',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',letterSpacing:'0.05em'}}>
+            Profil <ExternalLink size={10}/>
+          </a>
+        )}
+      </div>
+
+      {/* Stats */}
+      {stats && stats.followers !== 'N/A' && (
+        <div style={{padding:'0.8rem 1rem'}}>
+          {/* Profile row */}
+          <div style={{display:'flex',alignItems:'center',gap:'0.8rem',marginBottom:'0.8rem'}}>
+            <div style={{width:42,height:42,borderRadius:'50%',background:'linear-gradient(45deg,#f09433,#E1306C)',padding:2,flexShrink:0}}>
+              <div style={{width:'100%',height:'100%',borderRadius:'50%',background:'#111',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {item.image ? <img src={item.image} style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}} alt=""/> : <User size={18} color="#444"/>}
+              </div>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{display:'flex',alignItems:'center',gap:'0.4rem',marginBottom:'0.1rem'}}>
+                <span style={{fontSize:'0.8rem',fontWeight:700,color:'#fff'}}>{handle}</span>
+                {stats.verified && <span style={{fontSize:'0.6rem',color:'#0095f6'}}>✓</span>}
+              </div>
+              {stats.bio && <div style={{fontSize:'0.6rem',color:'#aaa',lineHeight:1.4}}>{stats.bio}</div>}
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.5rem',marginBottom:'0.7rem'}}>
+            {[{l:'Follower',v:stats.followers},{l:'Following',v:stats.following},{l:'Posts',v:stats.posts}].map(s =>
+              <div key={s.l} style={{background:'rgba(255,255,255,0.04)',borderRadius:'0.5rem',padding:'0.5rem',textAlign:'center'}}>
+                <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:'1.1rem',fontWeight:900,fontStyle:'italic',color:'#fff',lineHeight:1}}>{s.v}</div>
+                <div style={{fontSize:'0.48rem',color:'#666',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.15em',marginTop:'0.2rem'}}>{s.l}</div>
+              </div>
+            )}
+          </div>
+
+          {/* Social Blade link */}
+          {socialBladeUrl && (
+            <a href={socialBladeUrl} target="_blank" rel="noopener noreferrer"
+              style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'0.4rem',padding:'0.4rem',background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'0.5rem',textDecoration:'none',fontSize:'0.52rem',color:'#888',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',fontFamily:"'Barlow',sans-serif"}}>
+              <ExternalLink size={10}/> Social Blade — vollständige Statistiken
+            </a>
+          )}
+        </div>
+      )}
+
+      {stats && stats.followers === 'N/A' && handle && (
+        <div style={{padding:'0.7rem 1rem',fontSize:'0.62rem',color:'#666',textAlign:'center'}}>
+          Keine Daten gefunden für @{handle}
+          {socialBladeUrl && <a href={socialBladeUrl} target="_blank" rel="noopener noreferrer" style={{color:'#D4AF37',textDecoration:'none',marginLeft:'0.5rem'}}>Social Blade ↗</a>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FiveAsideMasterApp() {
   const [activeTab, setActiveTab] = useState('home');
   const [brandSubTab, setBrandSubTab] = useState('brands');
@@ -73,20 +210,17 @@ export default function FiveAsideMasterApp() {
         if (error) throw error;
         if (data) {
           rowId.current = data.id;
-          const content = { athletes: [], brands: [], rightsholder: [], ...data.content };
-          setDb(content);
+          setDb({ athletes: [], brands: [], rightsholder: [], ...data.content });
         }
-      } catch (err) {
-        setLoadError(true);
-      }
+      } catch { setLoadError(true); }
       setLoading(false);
     };
     init();
-    const channel = supabase.channel('schema-db-changes')
+    const ch = supabase.channel('db-changes')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'data_store' },
-        payload => { const c = { athletes: [], brands: [], rightsholder: [], ...payload.new.content }; setDb(c); })
+        p => setDb({ athletes: [], brands: [], rightsholder: [], ...p.new.content }))
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => supabase.removeChannel(ch);
   }, []);
 
   const sync = (newDb) => {
@@ -101,7 +235,6 @@ export default function FiveAsideMasterApp() {
   const cfg = activeTab === 'athletes' ? ATHLETE_CFG : brandSubTab === 'rightsholder' ? RIGHTSHOLDER_CFG : BRAND_CFG;
   const list = (db || {})[listKey] || [];
   const item = list.find(i => i.id === selectedId);
-
   const ranked = [...list].sort((a, b) => {
     const sk = cfg.map(c => c.k);
     return (b.scores[sk[1]] + b.scores[sk[2]]) - (a.scores[sk[1]] + a.scores[sk[2]]);
@@ -114,9 +247,8 @@ export default function FiveAsideMasterApp() {
 
   const addNew = () => {
     const n = {
-      id: Date.now(), name: 'Neuer Eintrag', image: null,
-      imgX: 50, imgY: 50,
-      alter: '', spielklasse: '', erfolge: '', management: '',
+      id: Date.now(), name: 'Neuer Eintrag', image: null, imgX: 50, imgY: 50,
+      alter: '', spielklasse: '', erfolge: '', management: '', instaHandle: '', instaStats: null,
       scores: cfg.reduce((a, c) => ({ ...a, [c.k]: 5 }), {})
     };
     if (activeTab === 'athletes') { n.sport = 'Sportart'; n.league = 'Liga'; }
@@ -139,17 +271,17 @@ export default function FiveAsideMasterApp() {
   const dotY = item ? ((10 - sc.impact) / 10) * 100 : 50;
 
   if (loading) return (
-    <div style={{ minHeight:'100vh', background:'#191919', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'1rem' }}>
-      <RefreshCw color="#D4AF37" size={36} style={{ animation:'spin 1s linear infinite' }} />
-      <p style={{ fontFamily:'"Barlow Condensed",sans-serif', fontWeight:900, fontStyle:'italic', textTransform:'uppercase', letterSpacing:'0.4em', fontSize:'0.75rem', color:'#D4AF37' }}>Connecting to Five Aside Cloud…</p>
+    <div style={{minHeight:'100vh',background:'#191919',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem'}}>
+      <RefreshCw color="#D4AF37" size={36} style={{animation:'spin 1s linear infinite'}}/>
+      <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.4em',fontSize:'0.75rem',color:'#D4AF37'}}>Connecting to Five Aside Cloud…</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
   if (loadError || !db) return (
-    <div style={{ minHeight:'100vh', background:'#191919', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'1rem' }}>
-      <p style={{ fontFamily:'"Barlow Condensed",sans-serif', fontWeight:900, fontStyle:'italic', textTransform:'uppercase', letterSpacing:'0.3em', fontSize:'0.75rem', color:'#ff3b3b' }}>Verbindungsfehler — Seite neu laden</p>
-      <button onClick={() => window.location.reload()} style={{ background:'#D4AF37', border:'none', color:'#000', padding:'0.6rem 1.4rem', borderRadius:'0.6rem', fontFamily:'"Barlow Condensed",sans-serif', fontWeight:900, fontSize:'0.8rem', cursor:'pointer' }}>Neu laden</button>
+    <div style={{minHeight:'100vh',background:'#191919',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem'}}>
+      <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.3em',fontSize:'0.75rem',color:'#ff3b3b'}}>Verbindungsfehler — Seite neu laden</p>
+      <button onClick={()=>window.location.reload()} style={{background:'#D4AF37',border:'none',color:'#000',padding:'0.6rem 1.4rem',borderRadius:'0.6rem',fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontSize:'0.8rem',cursor:'pointer'}}>Neu laden</button>
     </div>
   );
 
@@ -159,7 +291,7 @@ export default function FiveAsideMasterApp() {
     body{margin:0;background:#191919;font-family:'Barlow',sans-serif;}
     .wrap{width:100%;max-width:1440px;margin:0 auto;padding:2rem 3rem;}
     .app-header{display:flex;justify-content:space-between;align-items:center;padding:1.4rem 3rem;border-bottom:1px solid rgba(255,255,255,0.08);background:#191919;position:sticky;top:0;z-index:100;}
-    .logo-img{height:72px;width:auto;object-fit:contain;cursor:pointer;}
+    .logo-img{height:110px;width:auto;object-fit:contain;cursor:pointer;}
     .logo-sub{display:flex;align-items:center;gap:0.4rem;margin-top:0.3rem;}
     .dot{width:6px;height:6px;background:#2ecc71;border-radius:50%;animation:pulseDot 2s infinite;}
     @keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.4}}
@@ -189,11 +321,11 @@ export default function FiveAsideMasterApp() {
     .rank-badge{position:absolute;top:-10px;right:-10px;width:38px;height:38px;background:#D4AF37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:0.8rem;color:#000;z-index:2;box-shadow:0 4px 16px rgba(212,175,55,0.5);}
     .card-img{aspect-ratio:1;background:#111;border-radius:1.2rem;margin-bottom:1rem;overflow:hidden;border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;}
     .card-img img{width:100%;height:100%;object-fit:cover;}
-    .card-name{font-family:'Barlow Condensed',sans-serif;font-size:1.15rem;font-weight:700;font-style:italic;margin-bottom:0.25rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.2s;color:#fff;letter-spacing:-0.01em;}
+    .card-name{font-family:'Barlow Condensed',sans-serif;font-size:1.15rem;font-weight:700;font-style:italic;margin-bottom:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.2s;color:#fff;}
     .item-card:hover .card-name{color:#D4AF37;}
-    .card-sub{font-size:0.52rem;text-transform:uppercase;letter-spacing:0.25em;font-weight:700;color:#666;}
-    .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:0.7rem;padding-top:0.7rem;border-top:1px solid rgba(255,255,255,0.06);}
-    .card-delete-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:0.3rem;font-size:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#5a1a1a;transition:color 0.2s;font-family:'Barlow',sans-serif;padding:0;}
+    .card-sub{font-size:0.52rem;text-transform:uppercase;letter-spacing:0.2em;font-weight:700;color:#666;margin-bottom:0.6rem;}
+    .card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.06);}
+    .card-delete-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:0.3rem;font-size:0.48rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#5a1a1a;transition:color 0.2s;font-family:'Barlow',sans-serif;padding:0;}
     .card-delete-btn:hover{color:#ff3b3b;}
     .detail-wrap{display:grid;grid-template-columns:440px 1fr;gap:1.5rem;animation:fadeUp 0.35s ease both;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -225,8 +357,8 @@ export default function FiveAsideMasterApp() {
     .section-label{font-size:0.52rem;font-weight:900;text-transform:uppercase;letter-spacing:0.4em;color:#888;margin-bottom:1rem;margin-top:0.8rem;}
     .slider-item{margin-bottom:1.2rem;}
     .slider-top{display:flex;align-items:baseline;gap:0.5rem;margin-bottom:0.4rem;flex-wrap:wrap;}
-    .slider-main-label{font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;font-style:italic;color:#fff;letter-spacing:0.01em;}
-    .slider-sub-label{font-size:0.65rem;color:#fff;font-weight:500;opacity:0.6;}
+    .slider-main-label{font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;font-style:italic;color:#fff;}
+    .slider-sub-label{font-size:0.65rem;color:#fff;font-weight:500;opacity:0.55;}
     .slider-right{margin-left:auto;display:flex;align-items:baseline;gap:0.5rem;}
     .slider-pct{font-size:0.62rem;color:#888;font-weight:600;}
     .slider-val{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:900;font-style:italic;color:#D4AF37;line-height:1;}
@@ -263,7 +395,7 @@ export default function FiveAsideMasterApp() {
     .mbb-item{display:flex;align-items:center;gap:0.5rem;}
     .mbb-label{font-size:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:0.3em;color:#888;}
     .mbb-val{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:900;font-style:italic;color:#D4AF37;}
-    .qh-box{margin-left:auto;display:flex;align-items:flex-start;gap:0.5rem;background:#111;border:1px solid rgba(212,175,55,0.3);border-radius:0.6rem;padding:0.6rem 0.9rem;}
+    .qh-box{margin-left:auto;display:flex;align-items:flex-start;background:#111;border:1px solid rgba(212,175,55,0.3);border-radius:0.6rem;padding:0.6rem 0.9rem;}
     .qh-title{font-size:0.58rem;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;color:#D4AF37;margin-bottom:0.2rem;}
     .qh-strat{font-size:0.62rem;font-weight:700;color:#fff;margin-bottom:0.15rem;}
     .qh-desc{font-size:0.58rem;color:#aaa;line-height:1.4;max-width:220px;}
@@ -274,18 +406,18 @@ export default function FiveAsideMasterApp() {
   `;
 
   return (
-    <div style={{ background: '#191919', minHeight: '100vh', color: '#fff' }}>
+    <div style={{background:'#191919',minHeight:'100vh',color:'#fff'}}>
       <style>{CSS}</style>
 
       <header className="app-header">
-        <div onClick={() => { setActiveTab('home'); setView('grid'); }} style={{ cursor: 'pointer' }}>
-          <img src={LOGO_SRC} alt="Five Aside" className="logo-img" />
-          <div className="logo-sub"><div className="dot" /><span>Cloud Matrix Live</span></div>
+        <div onClick={()=>{setActiveTab('home');setView('grid');}} style={{cursor:'pointer'}}>
+          <img src={LOGO_SRC} alt="Five Aside" className="logo-img"/>
+          <div className="logo-sub"><div className="dot"/><span>Cloud Matrix Live</span></div>
         </div>
         {activeTab !== 'home' && (
           <div className="tab-switcher">
-            <button className={'tab-btn' + (activeTab === 'athletes' ? ' active' : '')} onClick={() => { setActiveTab('athletes'); setView('grid'); }}>Athlete Matrix</button>
-            <button className={'tab-btn' + (activeTab === 'brands' ? ' active' : '')} onClick={() => { setActiveTab('brands'); setView('grid'); }}>Brands / Rightsholder Matrix</button>
+            <button className={'tab-btn'+(activeTab==='athletes'?' active':'')} onClick={()=>{setActiveTab('athletes');setView('grid');}}>Athlete Matrix</button>
+            <button className={'tab-btn'+(activeTab==='brands'?' active':'')} onClick={()=>{setActiveTab('brands');setView('grid');}}>Brands / Rightsholder Matrix</button>
           </div>
         )}
       </header>
@@ -293,12 +425,12 @@ export default function FiveAsideMasterApp() {
       <div className="wrap">
         {activeTab === 'home' && (
           <div className="home-grid">
-            <div className="home-card" onClick={() => setActiveTab('athletes')}>
-              <div className="home-icon-wrap"><div className="hicon"><Users size={40} /></div></div>
+            <div className="home-card" onClick={()=>setActiveTab('athletes')}>
+              <div className="home-icon-wrap"><div className="hicon"><Users size={40}/></div></div>
               <h3>Athlete Matrix</h3>
             </div>
-            <div className="home-card" onClick={() => setActiveTab('brands')}>
-              <div className="home-icon-wrap"><div className="hicon"><Building2 size={40} /></div></div>
+            <div className="home-card" onClick={()=>setActiveTab('brands')}>
+              <div className="home-icon-wrap"><div className="hicon"><Building2 size={40}/></div></div>
               <h3>Brands / Rightsholder Matrix</h3>
             </div>
           </div>
@@ -306,35 +438,29 @@ export default function FiveAsideMasterApp() {
 
         {activeTab === 'brands' && view === 'grid' && (
           <div className="sub-switcher">
-            <button className={'sub-btn' + (brandSubTab === 'brands' ? ' active' : '')} onClick={() => setBrandSubTab('brands')}>Brands</button>
-            <button className={'sub-btn' + (brandSubTab === 'rightsholder' ? ' active' : '')} onClick={() => setBrandSubTab('rightsholder')}>Rightsholder</button>
+            <button className={'sub-btn'+(brandSubTab==='brands'?' active':'')} onClick={()=>setBrandSubTab('brands')}>Brands</button>
+            <button className={'sub-btn'+(brandSubTab==='rightsholder'?' active':'')} onClick={()=>setBrandSubTab('rightsholder')}>Rightsholder</button>
           </div>
         )}
 
         {activeTab !== 'home' && view === 'grid' && (
           <>
             <div className="grid-header">
-              <h2 className="grid-title">
-                {activeTab === 'athletes' ? 'Top Ranked Athletes' : brandSubTab === 'rightsholder' ? 'Top Ranked Rightsholder' : 'Top Ranked Brands'}
-              </h2>
-              <button className="btn-add" onClick={addNew}><Plus size={16} strokeWidth={3} /> Add New</button>
+              <h2 className="grid-title">{activeTab==='athletes'?'Top Ranked Athletes':brandSubTab==='rightsholder'?'Top Ranked Rightsholder':'Top Ranked Brands'}</h2>
+              <button className="btn-add" onClick={addNew}><Plus size={16} strokeWidth={3}/> Add New</button>
             </div>
             <div className="cards-grid">
               {ranked.map((it, idx) => (
-                <div key={it.id} className="item-card" onClick={() => { setSelectedId(it.id); setView('detail'); }}>
-                  <div className="rank-badge">#{idx + 1}</div>
+                <div key={it.id} className="item-card" onClick={()=>{setSelectedId(it.id);setView('detail');}}>
+                  <div className="rank-badge">#{idx+1}</div>
                   <div className="card-img">
-                    {it.image ? <img src={it.image} alt={it.name} style={{ objectPosition: `${it.imgX ?? 50}% ${it.imgY ?? 50}%` }} /> : <User size={52} color="#333" />}
+                    {it.image ? <img src={it.image} alt={it.name} style={{objectPosition:`${it.imgX??50}% ${it.imgY??50}%`}}/> : <User size={52} color="#333"/>}
                   </div>
                   <div className="card-name">{it.name}</div>
-                  <div className="card-sub">{activeTab === 'athletes' ? it.sport : it.industry}</div>
+                  <div className="card-sub">{activeTab==='athletes'?`${it.sport||''} ${it.league?'· '+it.league:''}`:it.industry||''}</div>
                   <div className="card-footer">
-                    <span style={{ fontSize: '0.5rem', color: '#555', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-                      Score {calcScores(it.scores, cfg).total.toFixed(1)}
-                    </span>
-                    <button className="card-delete-btn" onClick={(e) => del(it.id, e)}>
-                      <Trash2 size={11} /> Löschen
-                    </button>
+                    <span style={{fontSize:'0.48rem',color:'#555',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.12em'}}>Score {calcScores(it.scores,cfg).total.toFixed(1)}</span>
+                    <button className="card-delete-btn" onClick={e=>del(it.id,e)}><Trash2 size={11}/> Löschen</button>
                   </div>
                 </div>
               ))}
@@ -344,63 +470,62 @@ export default function FiveAsideMasterApp() {
 
         {activeTab !== 'home' && view === 'detail' && item && (
           <div className="detail-wrap">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
               <div className="panel">
-                <button className="back-btn" onClick={() => setView('grid')}><ChevronLeft size={13} /> Back to Dashboard</button>
+                <button className="back-btn" onClick={()=>setView('grid')}><ChevronLeft size={13}/> Back to Dashboard</button>
                 <div className="profile-row">
                   <div className="avatar-wrap">
                     <div className="avatar">
-                      {item.image ? <img src={item.image} alt={item.name} style={{ objectPosition: `${item.imgX ?? 50}% ${item.imgY ?? 50}%` }} /> : <User size={36} color="#333" />}
+                      {item.image ? <img src={item.image} alt={item.name} style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/> : <User size={36} color="#333"/>}
                     </div>
-                    <input type="file" style={{ display: 'none' }} ref={fileInputRef} onChange={e => {
-                      const f = e.target.files[0]; if (!f) return;
-                      const r = new FileReader(); r.onloadend = () => upd(item.id, 'image', r.result); r.readAsDataURL(f);
-                    }} />
-                    <div className="avatar-overlay" onClick={() => fileInputRef.current.click()}><Upload size={18} color="#fff" /></div>
+                    <input type="file" style={{display:'none'}} ref={fileInputRef} onChange={e=>{
+                      const f=e.target.files[0]; if(!f) return;
+                      const r=new FileReader(); r.onloadend=()=>upd(item.id,'image',r.result); r.readAsDataURL(f);
+                    }}/>
+                    <div className="avatar-overlay" onClick={()=>fileInputRef.current.click()}><Upload size={18} color="#fff"/></div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <input className="name-input" value={item.name} onChange={e => upd(item.id, 'name', e.target.value)} />
+                  <div style={{flex:1}}>
+                    <input className="name-input" value={item.name} onChange={e=>upd(item.id,'name',e.target.value)}/>
                   </div>
                 </div>
                 <div className="meta-grid">
                   <div className="meta-field">
-                    <div className="meta-label">Sport / Branche</div>
-                    <input className="meta-input" value={activeTab === 'athletes' ? (item.sport || '') : (item.industry || '')} onChange={e => upd(item.id, activeTab === 'athletes' ? 'sport' : 'industry', e.target.value)} />
+                    <div className="meta-label">Sportart</div>
+                    <input className="meta-input" value={activeTab==='athletes'?(item.sport||''):(item.industry||'')} onChange={e=>upd(item.id,activeTab==='athletes'?'sport':'industry',e.target.value)}/>
                   </div>
                   <div className="meta-field">
                     <div className="meta-label">Alter</div>
-                    <input className="meta-input" value={item.alter || ''} onChange={e => upd(item.id, 'alter', e.target.value)} />
+                    <input className="meta-input" value={item.alter||''} onChange={e=>upd(item.id,'alter',e.target.value)}/>
                   </div>
                   <div className="meta-field">
-                    <div className="meta-label">{activeTab === 'athletes' ? 'Liga / Spielklasse' : 'Fokus'}</div>
-                    <input className="meta-input" value={activeTab === 'athletes' ? (item.league || '') : (item.focus || '')} onChange={e => upd(item.id, activeTab === 'athletes' ? 'league' : 'focus', e.target.value)} />
+                    <div className="meta-label">{activeTab==='athletes'?'Verein / Team':'Fokus'}</div>
+                    <input className="meta-input" value={activeTab==='athletes'?(item.league||''):(item.focus||'')} onChange={e=>upd(item.id,activeTab==='athletes'?'league':'focus',e.target.value)}/>
                   </div>
                   <div className="meta-field">
                     <div className="meta-label">Management</div>
-                    <input className="meta-input" value={item.management || ''} onChange={e => upd(item.id, 'management', e.target.value)} />
+                    <input className="meta-input" value={item.management||''} onChange={e=>upd(item.id,'management',e.target.value)}/>
                   </div>
                   <div className="meta-field meta-full">
                     <div className="meta-label">Erfolge</div>
-                    <textarea className="meta-textarea" value={item.erfolge || ''} onChange={e => upd(item.id, 'erfolge', e.target.value)} placeholder="Titel, Auszeichnungen, Erfolge…" />
+                    <textarea className="meta-textarea" value={item.erfolge||''} onChange={e=>upd(item.id,'erfolge',e.target.value)} placeholder="Titel, Auszeichnungen, Erfolge…"/>
                   </div>
                   {item.image && (
                     <div className="img-pos-wrap">
-                      <div className="meta-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Move size={10} color="#888" /> Bildausschnitt anpassen</div>
-                      <div className="img-preview-box">
-                        <img src={item.image} alt="preview" style={{ objectPosition: `${item.imgX ?? 50}% ${item.imgY ?? 50}%` }} />
-                      </div>
+                      <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.4rem'}}><Move size={10} color="#888"/> Bildausschnitt anpassen</div>
+                      <div className="img-preview-box"><img src={item.image} alt="preview" style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/></div>
                       <div className="img-pos-controls">
                         <div className="pos-field">
                           <div className="meta-label">Horizontal ← →</div>
-                          <input type="range" min={0} max={100} step={1} value={item.imgX ?? 50} onChange={e => upd(item.id, 'imgX', parseInt(e.target.value))} />
+                          <input type="range" min={0} max={100} step={1} value={item.imgX??50} onChange={e=>upd(item.id,'imgX',parseInt(e.target.value))}/>
                         </div>
                         <div className="pos-field">
                           <div className="meta-label">Vertikal ↑ ↓</div>
-                          <input type="range" min={0} max={100} step={1} value={item.imgY ?? 50} onChange={e => upd(item.id, 'imgY', parseInt(e.target.value))} />
+                          <input type="range" min={0} max={100} step={1} value={item.imgY??50} onChange={e=>upd(item.id,'imgY',parseInt(e.target.value))}/>
                         </div>
                       </div>
                     </div>
                   )}
+                  <InstaCard item={item} upd={upd}/>
                 </div>
               </div>
 
@@ -417,7 +542,7 @@ export default function FiveAsideMasterApp() {
                       </div>
                     </div>
                     <input type="range" min={0} max={10} step={1} value={item.scores[c.k]}
-                      onChange={e => upd(item.id, 'scores', { ...item.scores, [c.k]: parseInt(e.target.value) })} />
+                      onChange={e=>upd(item.id,'scores',{...item.scores,[c.k]:parseInt(e.target.value)})}/>
                   </div>
                 ))}
                 <div className="gesamtscore">
@@ -432,7 +557,7 @@ export default function FiveAsideMasterApp() {
                     {cfg.map(c => (
                       <div key={c.k} className="gs-bar-row">
                         <div className="gs-bar-key">{c.abbr}</div>
-                        <div className="gs-bar-track"><div className="gs-bar-fill" style={{ width: (item.scores[c.k] * 10) + '%' }} /></div>
+                        <div className="gs-bar-track"><div className="gs-bar-fill" style={{width:(item.scores[c.k]*10)+'%'}}/></div>
                       </div>
                     ))}
                   </div>
@@ -444,27 +569,23 @@ export default function FiveAsideMasterApp() {
               <div className="matrix-panel">
                 <div className="matrix-header">Live-Matrix</div>
                 <div className="matrix-with-yaxis">
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', paddingBottom: '1.6rem' }}>
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', paddingRight: '0.2rem' }}>
-                      {[10, 8, 6, 4, 2, 0].map(n => <span key={n} className="tick">{n}</span>)}
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'0.3rem',paddingBottom:'1.6rem'}}>
+                    <div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'space-between',alignItems:'flex-end',paddingRight:'0.2rem'}}>
+                      {[10,8,6,4,2,0].map(n=><span key={n} className="tick">{n}</span>)}
                     </div>
                     <div className="y-axis-label">Markt-Impact</div>
                   </div>
                   <div className="matrix-inner">
                     <div className="matrix-canvas">
-                      {[20, 40, 60, 80].map(p => <div key={'h' + p} className="mline-h" style={{ top: p + '%' }} />)}
-                      {[20, 40, 60, 80].map(p => <div key={'v' + p} className="mline-v" style={{ left: p + '%' }} />)}
-                      <div className="mline-center-h" /><div className="mline-center-v" />
-                      {QUADRANTS.map(q => (
-                        <div key={q.id} className="quad-label" style={{
-                          left: q.sx, top: q.sy, transform: 'translate(-50%,-50%)',
-                          color: q.id === qid ? 'rgba(212,175,55,0.65)' : 'rgba(255,255,255,0.15)',
-                          fontWeight: q.id === qid ? 700 : 500,
-                        }}>{q.label}</div>
+                      {[20,40,60,80].map(p=><div key={'h'+p} className="mline-h" style={{top:p+'%'}}/>)}
+                      {[20,40,60,80].map(p=><div key={'v'+p} className="mline-v" style={{left:p+'%'}}/>)}
+                      <div className="mline-center-h"/><div className="mline-center-v"/>
+                      {QUADRANTS.map(q=>(
+                        <div key={q.id} className="quad-label" style={{left:q.sx,top:q.sy,transform:'translate(-50%,-50%)',color:q.id===qid?'rgba(212,175,55,0.65)':'rgba(255,255,255,0.15)',fontWeight:q.id===qid?700:500}}>{q.label}</div>
                       ))}
-                      <div className="matrix-dot" style={{ left: clamp(dotX) + '%', top: clamp(dotY) + '%' }} />
+                      <div className="matrix-dot" style={{left:clamp(dotX)+'%',top:clamp(dotY)+'%'}}/>
                     </div>
-                    <div className="x-ticks">{[0, 2, 4, 6, 8, 10].map(n => <span key={n} className="tick">{n}</span>)}</div>
+                    <div className="x-ticks">{[0,2,4,6,8,10].map(n=><span key={n} className="tick">{n}</span>)}</div>
                     <div className="x-axis-label">Management-Synergie</div>
                   </div>
                 </div>
@@ -473,20 +594,19 @@ export default function FiveAsideMasterApp() {
                   <div className="mbb-item"><span className="mbb-label">Impact</span><span className="mbb-val">{sc.impact.toFixed(1)}</span></div>
                   <div className="qh-box">
                     <div>
-                      <div className="qh-title">{qdata.id === 'tr' ? 'Anker-Athlet' : qdata.id === 'tl' ? 'Entwicklungsprojekt' : qdata.id === 'br' ? 'Spezialist' : 'Kritischer Fall'}</div>
+                      <div className="qh-title">{qdata.id==='tr'?'Anker-Athlet':qdata.id==='tl'?'Entwicklungsprojekt':qdata.id==='br'?'Spezialist':'Kritischer Fall'}</div>
                       <div className="qh-strat">{qdata.strat}</div>
                       <div className="qh-desc">{qdata.desc}</div>
                     </div>
                   </div>
                 </div>
               </div>
-              <button className="btn-delete-detail" onClick={(e) => del(item.id, e)}>
-                <Trash2 size={12} /> Delete Permanent
-              </button>
+              <button className="btn-delete-detail" onClick={e=>del(item.id,e)}><Trash2 size={12}/> Delete Permanent</button>
             </div>
           </div>
         )}
       </div>
     </div>
   );
+}
 }
