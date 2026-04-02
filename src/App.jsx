@@ -838,3 +838,40 @@ export default function FiveAsideMasterApp() {
   );
 }
 
+useEffect(() => {
+  const init = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('data_store')
+        .select('id, content')
+        .limit(1)
+        .single();
+      if (error) throw error;
+      if (data) {
+        rowId.current = data.id;
+        setDb({
+          athletes:[], brands:[], rightsholder:[],
+          fiveaside_athletes:[], fiveaside_brands:[],
+          ...data.content
+        });
+      }
+    } catch(e) {
+      console.error('Supabase error:', e);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Timeout-Sicherheit: nach 10 Sek. Fehler zeigen
+  const timeout = setTimeout(() => {
+    setLoading(false);
+    setLoadError(true);
+  }, 10000);
+  init().then(() => clearTimeout(timeout));
+
+  const ch = supabase.channel('db-changes')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'data_store'},
+      p=>setDb({athletes:[],brands:[],rightsholder:[],fiveaside_athletes:[],fiveaside_brands:[],...p.new.content}))
+    .subscribe();
+  return ()=>{ supabase.removeChannel(ch); clearTimeout(timeout); };
+}, []);
