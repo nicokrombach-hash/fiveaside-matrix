@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader, Zap, Search, Image } from 'lucide-react';
+import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader, Zap, Search } from 'lucide-react';
 
 const LOGO_SRC = '/fa_logo.jpg';
 const SUPABASE_URL = 'https://euudeiogircwlvzmsmsr.supabase.co';
@@ -21,7 +21,13 @@ const BRAND_CFG = [
   { k: 'aufwand',  l: 'Aufwand / Timing',       s: 'Ressourcen / Kapazität',     w: '15%', abbr: 'AU' },
   { k: 'network',  l: 'Network Fit / Synergie', s: 'Menschen / Kompatibilität',  w: '15%', abbr: 'NW' },
 ];
-const RIGHTSHOLDER_CFG = BRAND_CFG.map(c=>({...c}));
+const RIGHTSHOLDER_CFG = [
+  { k: 'passion',  l: 'Passion / Innovation',   s: 'Leidenschaft / Kreativität', w: '20%', abbr: 'PA' },
+  { k: 'sexyness', l: 'Sexyness / Potenzial',   s: 'Marktattraktivität',         w: '25%', abbr: 'SE' },
+  { k: 'ip',       l: 'IP / Momentum',          s: 'Rechte / Timing',            w: '25%', abbr: 'IP' },
+  { k: 'aufwand',  l: 'Aufwand / Timing',       s: 'Ressourcen / Kapazität',     w: '15%', abbr: 'AU' },
+  { k: 'network',  l: 'Network Fit / Synergie', s: 'Menschen / Kompatibilität',  w: '15%', abbr: 'NW' },
+];
 
 const QUADRANTS = [
   { id:'tl', label:'Entwicklungs-\nprojekte', sx:'23%', sy:'22%', strat:'Invest & Develop', desc:'Hoher Impact, geringere Synergie. Entwicklungspotenzial mit gezieltem Aufbau.' },
@@ -88,61 +94,54 @@ function parseJSON(text, requiredKey) {
 async function fetchInstaStats(handle) {
   const h = handle.replace('@','').trim();
   const text = await claudeAPI(
-    `Search socialblade.com/instagram/user/${h} AND instagram.com/${h} to find current follower count for @${h}. ` +
-    `Look for the most recent follower count - it may be in millions (M) not thousands (K). ` +
-    `Return ONLY this exact JSON format with no other text: {"followers":"1.2M","following":"456","posts":"789","bio":"bio text here","verified":false} ` +
-    `Use K for thousands, M for millions. Real example: if they have 1,200,000 followers write "1.2M". ` +
-    `If data not found: {"followers":"N/A","following":"N/A","posts":"N/A","bio":"","verified":false}`
+    `Search for the exact current Instagram follower count of @${h}. ` +
+    `Check multiple sources: socialblade.com/instagram/user/${h}, instagram.com/${h}, and google search "${h} instagram followers". ` +
+    `IMPORTANT: Report the HIGHEST and most recent number you find. Follower counts are often in millions for athletes. ` +
+    `If you see 1,200,000 write "1.2M". If you see 990,000 write "990K". Be precise. ` +
+    `Return ONLY valid JSON: {"followers":"1.2M","following":"456","posts":"789","bio":"short bio","verified":false} ` +
+    `No other text. If truly not found: {"followers":"N/A","following":"N/A","posts":"N/A","bio":"","verified":false}`
   );
   return parseJSON(text, 'followers');
 }
 
 async function fetchAthleteAutofill(name) {
   const text = await claudeAPI(
-    `Search the web for the athlete or sports person named "${name}". Find their current information. ` +
-    `Return ONLY this exact JSON with no other text: ` +
+    `Search the web comprehensively for the athlete "${name}". Search Wikipedia, transfermarkt.de, and sports news sites. ` +
+    `Find: sport, current team/club, age, management agency, career highlights, current season stats. ` +
+    `Return ONLY this JSON, no other text: ` +
     `{"sport":"","league":"","alter":"","management":"","erfolge":"","leistungsdaten":"","instaHandle":"","imageUrl":""}. ` +
-    `For imageUrl: find a direct URL to a professional photo (Wikipedia, club website, official press photo). Must end in .jpg or .png. ` +
-    `For leistungsdaten: 2-3 key stats in German with bullet points like "• 12 Tore / 8 Assists\\n• Marktwert: 15 Mio €". ` +
-    `For erfolge: key achievements as text. For instaHandle: just the username without @. ` +
-    `Unknown fields: empty string "".`
+    `For "erfolge": 3-5 major achievements as text (e.g. "U21 Weltmeister 2023, 2x Torschützenkönig"). ` +
+    `For "leistungsdaten": current season stats as German bullet points (e.g. "• 14 Tore / 9 Assists\n• Marktwert: 25 Mio €"). ` +
+    `For "instaHandle": username without @. For "imageUrl": direct .jpg/.png URL. For "alter": age number. Unknown = "".`
   );
   return parseJSON(text, 'sport');
 }
 
 async function fetchBrandAutofill(name) {
   const text = await claudeAPI(
-    `Search the web for the company, brand or rights holder named "${name}". Find their current information. ` +
-    `Return ONLY this exact JSON with no other text: ` +
+    `Search the web for the company or brand "${name}". Return ONLY this JSON: ` +
     `{"industry":"","focus":"","alter":"","management":"","erfolge":"","leistungsdaten":"","instaHandle":"","imageUrl":""}. ` +
-    `For imageUrl: find a direct URL to their logo or official brand image (must end in .jpg or .png). ` +
-    `For leistungsdaten: 2-3 key facts about their sports marketing reach/size in German with bullet points. ` +
-    `For alter: founding year. For management: CEO or key contact. ` +
-    `Unknown fields: empty string "".`
+    `For "imageUrl": direct .jpg/.png URL to logo. For "leistungsdaten": 2-3 key facts in German bullet points. ` +
+    `For "alter": founding year. For "management": CEO. Unknown = "".`
   );
   return parseJSON(text, 'industry');
 }
 
 async function fetchLeistungsdaten(name, sport) {
+  const sportSites = {
+    'fußball': 'transfermarkt.de und sofascore.com',
+    'basketball': 'basketball-reference.com und nba.com',
+    'tennis': 'atptour.com und wtatennis.com',
+    'golf': 'pgatour.com und dpworldtour.com',
+    'handball': 'handball-bundesliga.de',
+  };
+  const s = sport?.toLowerCase() || '';
+  const sites = Object.entries(sportSites).find(([k]) => s.includes(k))?.[1] || 'Google und Wikipedia';
   const text = await claudeAPI(
-    `Search transfermarkt.de, sofascore.com, or sport-specific stats sites for the athlete "${name}" (sport: ${sport||'unknown'}). ` +
-    `Find current season stats. Return ONLY: {"stats":"2-3 bullet points in German e.g. • 12 Tore / 8 Assists\\n• Marktwert: 15 Mio €\\n• Letzte 5: 3G 2A"}`
+    `Search ${sites} for current season statistics of "${name}" (sport: ${sport||'unknown'}). ` +
+    `Return ONLY valid JSON: {"stats":"3-4 bullet points in German e.g. • 14 Tore / 9 Assists\n• Marktwert: 25 Mio €\n• Nationalmannschaft: 8 Einsätze"} No other text.`
   );
   return parseJSON(text, 'stats');
-}
-
-async function urlToBase64(url) {
-  try {
-    const res = await fetch(`/api/claude?imageProxy=${encodeURIComponent(url)}`);
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    return new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch(e) { return null; }
 }
 
 function InstaCard({ item, upd }) {
@@ -250,11 +249,7 @@ export default function FiveAsideMasterApp() {
     init();
     const ch = supabase.channel('db-changes')
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'data_store' },
-        p => setDb(prev => {
-          const incoming = { athletes:[], brands:[], rightsholder:[], ...p.new.content };
-          // Merge: keep local state for item currently being edited
-          return incoming;
-        }))
+        p => setDb({ athletes:[], brands:[], rightsholder:[], ...p.new.content }))
       .subscribe();
     return () => supabase.removeChannel(ch);
   }, []);
@@ -286,15 +281,12 @@ export default function FiveAsideMasterApp() {
     sync({ ...db, [listKey]:newList });
   };
 
-  const doAutoFill = async (id, isNew=false) => {
-    const currentList = ((db||{})[listKey]||[]);
-    const it = currentList.find(i=>i.id===id);
+  const doAutoFill = async (id) => {
+    const it = ((db||{})[listKey]||[]).find(i=>i.id===id);
     if (!it) return;
     setAiLoading(prev=>({...prev,[id]:true}));
-
     const isAthlete = activeTab==='athletes';
     const data = isAthlete ? await fetchAthleteAutofill(it.name) : await fetchBrandAutofill(it.name);
-
     if (data) {
       const fields = {};
       if (isAthlete) {
@@ -309,31 +301,19 @@ export default function FiveAsideMasterApp() {
       if (data.erfolge) fields.erfolge = data.erfolge;
       if (data.leistungsdaten) fields.leistungsdaten = data.leistungsdaten;
       if (data.instaHandle && !it.instaHandle) fields.instaHandle = data.instaHandle;
-
-      // Try to get image URL
-      if (data.imageUrl && !it.image) {
-        fields.aiImageUrl = data.imageUrl;
-      }
-
+      if (data.imageUrl && !it.image) fields.aiImageUrl = data.imageUrl;
       updMulti(id, fields);
-
-      // Fetch Instagram stats if we got a handle
       const handleToFetch = data.instaHandle || it.instaHandle;
       if (handleToFetch) {
         const insta = await fetchInstaStats(handleToFetch.replace('@','').trim());
-        if (insta) {
-          const currentFields = { ...fields };
-          currentFields.instaHandle = handleToFetch;
-          currentFields.instaStats = insta;
-          updMulti(id, currentFields);
-        }
+        if (insta) updMulti(id, { ...fields, instaHandle: handleToFetch, instaStats: insta });
       }
     }
     setAiLoading(prev=>({...prev,[id]:false}));
   };
 
   const addNew = () => {
-    const n = { id:Date.now(), name:'Neuer Eintrag', image:null, imgX:50, imgY:50, alter:'', spielklasse:'', erfolge:'', management:'', leistungsdaten:'', instaHandle:'', instaStats:null, scores:cfg.reduce((a,c)=>({...a,[c.k]:5}),{}) };
+    const n = { id:Date.now(), name:'Neuer Eintrag', image:null, imgX:50, imgY:50, alter:'', spielklasse:'', erfolge:'', management:'', leistungsdaten:'', instaHandle:'', instaStats:null, aiImageUrl:'', scores:cfg.reduce((a,c)=>({...a,[c.k]:5}),{}) };
     if (activeTab==='athletes') { n.sport='Sportart'; n.league='Liga'; } else { n.industry='Branche'; n.focus='Fokus'; }
     sync({ ...db, [listKey]:[...((db||{})[listKey]||[]),n] });
     setSelectedId(n.id); setView('detail');
@@ -342,11 +322,11 @@ export default function FiveAsideMasterApp() {
   const addFromName = async () => {
     if (!quickName.trim()) return;
     setQuickLoading(true);
-    const n = { id:Date.now(), name:quickName.trim(), image:null, imgX:50, imgY:50, alter:'', spielklasse:'', erfolge:'', management:'', leistungsdaten:'', instaHandle:'', instaStats:null, scores:cfg.reduce((a,c)=>({...a,[c.k]:5}),{}) };
+    const n = { id:Date.now(), name:quickName.trim(), image:null, imgX:50, imgY:50, alter:'', spielklasse:'', erfolge:'', management:'', leistungsdaten:'', instaHandle:'', instaStats:null, aiImageUrl:'', scores:cfg.reduce((a,c)=>({...a,[c.k]:5}),{}) };
     if (activeTab==='athletes') { n.sport=''; n.league=''; } else { n.industry=''; n.focus=''; }
     const newDb = { ...db, [listKey]:[...((db||{})[listKey]||[]),n] };
     sync(newDb); setSelectedId(n.id); setView('detail'); setQuickName(''); setQuickLoading(false);
-    setTimeout(()=>doAutoFill(n.id, true), 400);
+    setTimeout(()=>doAutoFill(n.id), 400);
   };
 
   const refreshLeistung = async (id) => {
@@ -460,7 +440,7 @@ export default function FiveAsideMasterApp() {
     .meta-textarea:focus{border-color:#D4AF37;color:#D4AF37;}
     .meta-full{grid-column:span 2;}
     .ai-img-preview{grid-column:span 2;background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.25);border-radius:0.6rem;padding:0.7rem;display:flex;gap:0.8rem;align-items:center;}
-    .ai-img-thumb{width:60px;height:60px;border-radius:0.5rem;object-fit:cover;border:1px solid rgba(255,255,255,0.1);flex-shrink:0;}
+    .ai-img-thumb{width:60px;height:60px;border-radius:0.5rem;object-fit:cover;border:1px solid rgba(255,255,255,0.1);flex-shrink:0;background:#111;}
     .leistung-box{grid-column:span 2;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:0.6rem;padding:0.7rem 0.9rem;}
     .leistung-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;}
     .leistung-refresh{display:flex;align-items:center;gap:0.3rem;background:none;border:1px solid rgba(212,175,55,0.25);border-radius:0.35rem;padding:0.18rem 0.55rem;font-size:0.48rem;font-weight:700;color:#D4AF37;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.2s;}
@@ -527,7 +507,6 @@ export default function FiveAsideMasterApp() {
   return (
     <div style={{background:'#191919',minHeight:'100vh',color:'#fff'}}>
       <style>{CSS}</style>
-
       <header className="app-header">
         <div onClick={()=>{setActiveTab('home');setView('grid');}} style={{cursor:'pointer'}}>
           <img src={LOGO_SRC} alt="Five Aside" className="logo-img"
@@ -570,23 +549,21 @@ export default function FiveAsideMasterApp() {
               <h2 className="grid-title">{activeTab==='athletes'?'Top Ranked Athletes':brandSubTab==='rightsholder'?'Top Ranked Rightsholder':'Top Ranked Brands'}</h2>
               <button className="btn-add" onClick={addNew}><Plus size={15} strokeWidth={3}/> Manuell</button>
             </div>
-
             <div className="quick-add-row">
               <input className="quick-input" value={quickName} onChange={e=>setQuickName(e.target.value)}
                 onKeyDown={e=>e.key==='Enter'&&!quickLoading&&quickName.trim()&&addFromName()}
-                placeholder={activeTab==='athletes'?'Athleten-Name → KI füllt alle Felder auto…':'Brand/Rightsholder-Name → KI füllt alle Felder auto…'}/>
+                placeholder={activeTab==='athletes'?'Athleten-Name → KI füllt alle Felder automatisch…':'Brand/Rightsholder-Name → KI füllt alle Felder automatisch…'}/>
               <button className="btn-ai" onClick={addFromName} disabled={quickLoading||!quickName.trim()}>
                 {quickLoading?<><Loader size={13} style={{animation:'spin 1s linear infinite'}}/> Erstellt…</>:<><Zap size={13}/> KI-Schnellerstellung</>}
               </button>
             </div>
-
             <div className="cards-grid">
               {ranked.map((it, idx) => (
                 <div key={it.id} className="item-card" onClick={()=>{setSelectedId(it.id);setView('detail');setImgAdjusted({});}}>
                   <div className="rank-badge">#{idx+1}</div>
                   <div className="card-img">
                     {it.image?<img src={it.image} alt={it.name} style={{objectPosition:`${it.imgX??50}% ${it.imgY??50}%`}}/>:
-                     it.aiImageUrl?<img src={it.aiImageUrl} alt={it.name} style={{objectFit:'cover',width:'100%',height:'100%'}} onError={e=>e.target.style.display='none'}/>:
+                     it.aiImageUrl?<img src={it.aiImageUrl} alt={it.name} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>e.target.style.display='none'}/>:
                      <User size={52} color="#333"/>}
                   </div>
                   <div className="card-name">{it.name}</div>
@@ -641,7 +618,7 @@ export default function FiveAsideMasterApp() {
                     <img src={item.aiImageUrl} alt="KI Vorschlag" className="ai-img-thumb" onError={e=>e.target.style.display='none'}/>
                     <div style={{flex:1}}>
                       <div style={{fontSize:'0.52rem',color:'#D4AF37',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:'0.3rem'}}>KI-Bild Vorschlag</div>
-                      <div style={{fontSize:'0.6rem',color:'#888',marginBottom:'0.5rem'}}>Dieses Bild wurde von der KI gefunden. Du kannst es nutzen oder ein eigenes hochladen.</div>
+                      <div style={{fontSize:'0.6rem',color:'#888',marginBottom:'0.5rem'}}>Von KI gefunden — oder eigenes Bild hochladen.</div>
                       <div style={{display:'flex',gap:'0.5rem'}}>
                         <button onClick={()=>fileInputRef.current.click()} style={{background:'#D4AF37',border:'none',color:'#000',padding:'0.25rem 0.7rem',borderRadius:'0.35rem',fontSize:'0.52rem',fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>Eigenes hochladen</button>
                         <button onClick={()=>upd(item.id,'aiImageUrl','')} style={{background:'none',border:'1px solid rgba(255,255,255,0.15)',color:'#888',padding:'0.25rem 0.7rem',borderRadius:'0.35rem',fontSize:'0.52rem',fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>Verwerfen</button>
@@ -671,7 +648,6 @@ export default function FiveAsideMasterApp() {
                     <div className="meta-label">Erfolge</div>
                     <textarea className="meta-textarea" value={item.erfolge||''} onChange={e=>upd(item.id,'erfolge',e.target.value)} placeholder="Titel, Auszeichnungen, Erfolge…"/>
                   </div>
-
                   <div className="leistung-box">
                     <div className="leistung-header">
                       <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.35rem'}}><Zap size={10} color="#D4AF37"/> Leistungsdaten</div>
@@ -685,7 +661,6 @@ export default function FiveAsideMasterApp() {
                       : <div className="leistung-empty">Noch keine Daten — „KI-Update" klicken für aktuelle Statistiken</div>
                     }
                   </div>
-
                   {item.image && !imgAdjusted[item.id] && (
                     <div className="img-pos-wrap">
                       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
