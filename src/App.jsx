@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader, Zap, Search } from 'lucide-react';
 
 const LOGO_SRC = '/fa_logo.jpg';
+const LOGO_SRC_FALLBACK = '/fa_logo.JPG';
 const SUPABASE_URL = 'https://euudeiogircwlvzmsmsr.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_uPz_tUHK-jgtGSa2tstLHQ_mO1nF-63';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -128,19 +129,16 @@ async function fetchBrandAutofill(name) {
 }
 
 async function fetchLeistungsdaten(name, sport) {
-  const sportSites = {
-    'fußball': 'transfermarkt.de und sofascore.com',
-    'basketball': 'basketball-reference.com und nba.com',
-    'tennis': 'atptour.com und wtatennis.com',
-    'golf': 'pgatour.com und dpworldtour.com',
-    'handball': 'handball-bundesliga.de',
-  };
-  const s = sport?.toLowerCase() || '';
-  const sites = Object.entries(sportSites).find(([k]) => s.includes(k))?.[1] || 'Google und Wikipedia';
   const text = await claudeAPI(
-    `Search ${sites} for current season statistics of "${name}" (sport: ${sport||'unknown'}). ` +
-    `Return ONLY valid JSON: {"stats":"3-4 bullet points in German e.g. • 14 Tore / 9 Assists\n• Marktwert: 25 Mio €\n• Nationalmannschaft: 8 Einsätze"} No other text.`
+    `Find current 2024/2025 season statistics for "${name}" who plays ${sport||'sports'}. ` +
+    `Search transfermarkt.de for football, basketball-reference.com for basketball, or Google for others. ` +
+    `You MUST return ONLY this JSON and nothing else: ` +
+    `{"stats":"• [stat 1]\\n• [stat 2]\\n• [stat 3]"}. ` +
+    `Replace placeholders with real numbers. Example: {"stats":"• 14 Tore / 9 Assists\\n• Marktwert: 25 Mio €\\n• 8 Länderspiele"}`
   );
+  if (!text) return null;
+  const m = text.match(/"stats"\s*:\s*"([^"]+)"/);
+  if (m) return { stats: m[1].replace(/\\n/g, '\n') };
   return parseJSON(text, 'stats');
 }
 
@@ -165,6 +163,19 @@ function InstaCard({ item, upd }) {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (clean.length > 2) timerRef.current = setTimeout(()=>doFetch(clean), 1500);
   };
+
+  {stats && stats.followers !== 'N/A' && (
+  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.4rem',marginTop:'0.5rem'}}>
+    {[{l:'Follower',k:'followers'},{l:'Following',k:'following'},{l:'Posts',k:'posts'}].map(s=>
+      <div key={s.k} style={{background:'rgba(255,255,255,0.03)',borderRadius:'0.4rem',padding:'0.3rem'}}>
+        <div style={{fontSize:'0.42rem',color:'#666',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.2rem'}}>{s.l}</div>
+        <input style={{width:'100%',background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,0.1)',outline:'none',fontSize:'0.78rem',fontWeight:700,color:'#fff',fontFamily:"'Barlow',sans-serif",padding:'0.1rem 0'}}
+          value={stats[s.k]||''}
+          onChange={e=>upd(item.id,'instaStats',{...stats,[s.k]:e.target.value})}/>
+      </div>
+    )}
+  </div>
+)}
 
   return (
     <div style={{gridColumn:'span 2',borderRadius:'0.8rem',overflow:'hidden',border:'1px solid rgba(225,48,108,0.3)',background:'#0a0a0a',marginTop:'0.2rem'}}>
