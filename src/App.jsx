@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader } from 'lucide-react';
-import LOGO_SRC from './FA Logo_weiß.png';
+import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader, ChevronDown, ChevronUp } from 'lucide-react';
+import LOGO_SRC from './fa_logo.png';
 
 const SUPABASE_URL = 'https://euudeiogircwlvzmsmsr.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_uPz_tUHK-jgtGSa2tstLHQ_mO1nF-63';
@@ -66,7 +66,7 @@ async function fetchInstaStats(handle) {
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
-          content: `Search Social Blade for Instagram user ${cleanHandle}. Return ONLY valid JSON: {"followers":"123K","following":"456","posts":"789","bio":"text","verified":false}. Use K/M for numbers. If not found: {"followers":"N/A","following":"N/A","posts":"N/A","bio":"","verified":false}`
+          content: `Search Social Blade (socialblade.com/instagram/user/${cleanHandle}) for Instagram stats of @${cleanHandle}. Return ONLY valid JSON object: {"followers":"123K","following":"456","posts":"789","bio":"short bio","verified":false}. Use K for thousands, M for millions. If not found return: {"followers":"N/A","following":"N/A","posts":"N/A","bio":"","verified":false}`
         }]
       })
     });
@@ -74,7 +74,7 @@ async function fetchInstaStats(handle) {
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
     const jsonMatch = text.match(/\{[^{}]*"followers"[^{}]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
-  } catch(e) {}
+  } catch(e) { console.error('Insta fetch:', e); }
   return null;
 }
 
@@ -109,43 +109,39 @@ function InstaCard({ item, upd }) {
   };
 
   return (
-    <div style={{gridColumn:'span 2', borderRadius:'0.8rem', overflow:'hidden', border:'1px solid rgba(225,48,108,0.3)', background:'#0a0a0a'}}>
-      {/* Header */}
+    <div style={{gridColumn:'span 2', borderRadius:'0.8rem', overflow:'hidden', border:'1px solid rgba(225,48,108,0.3)', background:'#0a0a0a', marginTop:'0.2rem'}}>
       <div style={{padding:'0.65rem 1rem', display:'flex', alignItems:'center', gap:'0.6rem', borderBottom:'1px solid rgba(255,255,255,0.05)', background:'linear-gradient(90deg,rgba(225,48,108,0.1),transparent)'}}>
         <div style={{width:24,height:24,borderRadius:'50%',background:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
           <Instagram size={12} color="#fff"/>
         </div>
-        <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.62rem',fontWeight:900,color:'#fff',letterSpacing:'0.15em',textTransform:'uppercase'}}>Instagram</span>
-        {loading && <span style={{marginLeft:'auto',fontSize:'0.48rem',color:'#E1306C',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.15em'}}>Lädt...</span>}
+        <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.65rem',fontWeight:900,color:'#fff',letterSpacing:'0.15em',textTransform:'uppercase'}}>Instagram</span>
+        {loading && <span style={{marginLeft:'auto',fontSize:'0.48rem',color:'#E1306C',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.15em',display:'flex',alignItems:'center',gap:'0.3rem'}}><Loader size={11} style={{animation:'spin 1s linear infinite'}}/>Sucht…</span>}
         {!loading && stats && stats.followers !== 'N/A' && <span style={{marginLeft:'auto',fontSize:'0.45rem',color:'#2ecc71',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.2em'}}>● Live</span>}
         {!loading && handle && (
-          <button onClick={refreshStats} style={{marginLeft: stats ? '0.5rem' : 'auto', background:'none',border:'none',cursor:'pointer',color:'#666',fontSize:'0.45rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',fontFamily:"'Barlow',sans-serif",padding:0}}>
+          <button onClick={refreshStats} style={{marginLeft: (!stats || stats.followers === 'N/A') ? 'auto' : '0.5rem', background:'none',border:'none',cursor:'pointer',color:'#666',fontSize:'0.45rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',fontFamily:"'Barlow',sans-serif",padding:0}}>
             ↻ Update
           </button>
         )}
       </div>
 
-      {/* Input row */}
       <div style={{padding:'0.65rem 1rem', borderBottom: stats ? '1px solid rgba(255,255,255,0.05)' : 'none', display:'flex', alignItems:'center', gap:'0.5rem'}}>
         <span style={{color:'#E1306C',fontSize:'0.9rem',fontWeight:700,flexShrink:0}}>@</span>
         <input
           style={{flex:1,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.4rem',padding:'0.32rem 0.6rem',fontSize:'0.76rem',fontWeight:600,color:'#fff',outline:'none',fontFamily:"'Barlow',sans-serif"}}
           value={handle}
           onChange={e => handleInput(e.target.value)}
-          placeholder="username eingeben…"
+          placeholder="username eingeben — Stats werden auto-geladen"
         />
         {profileUrl && (
           <a href={profileUrl} target="_blank" rel="noopener noreferrer"
-            style={{display:'flex',alignItems:'center',gap:'0.3rem',background:'linear-gradient(45deg,#dc2743,#cc2366)',color:'#fff',textDecoration:'none',padding:'0.32rem 0.65rem',borderRadius:'0.4rem',fontSize:'0.58rem',fontWeight:700,whiteSpace:'nowrap',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',letterSpacing:'0.05em'}}>
+            style={{display:'flex',alignItems:'center',gap:'0.3rem',background:'linear-gradient(45deg,#dc2743,#cc2366)',color:'#fff',textDecoration:'none',padding:'0.32rem 0.7rem',borderRadius:'0.4rem',fontSize:'0.58rem',fontWeight:700,whiteSpace:'nowrap',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',letterSpacing:'0.05em'}}>
             Profil <ExternalLink size={10}/>
           </a>
         )}
       </div>
 
-      {/* Stats */}
       {stats && stats.followers !== 'N/A' && (
         <div style={{padding:'0.8rem 1rem'}}>
-          {/* Profile row */}
           <div style={{display:'flex',alignItems:'center',gap:'0.8rem',marginBottom:'0.8rem'}}>
             <div style={{width:42,height:42,borderRadius:'50%',background:'linear-gradient(45deg,#f09433,#E1306C)',padding:2,flexShrink:0}}>
               <div style={{width:'100%',height:'100%',borderRadius:'50%',background:'#111',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -154,14 +150,12 @@ function InstaCard({ item, upd }) {
             </div>
             <div style={{flex:1}}>
               <div style={{display:'flex',alignItems:'center',gap:'0.4rem',marginBottom:'0.1rem'}}>
-                <span style={{fontSize:'0.8rem',fontWeight:700,color:'#fff'}}>{handle}</span>
-                {stats.verified && <span style={{fontSize:'0.6rem',color:'#0095f6'}}>✓</span>}
+                <span style={{fontSize:'0.8rem',fontWeight:700,color:'#fff'}}>@{handle}</span>
+                {stats.verified && <span style={{fontSize:'0.7rem',color:'#0095f6'}}>✓</span>}
               </div>
               {stats.bio && <div style={{fontSize:'0.6rem',color:'#aaa',lineHeight:1.4}}>{stats.bio}</div>}
             </div>
           </div>
-
-          {/* Stats row */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.5rem',marginBottom:'0.7rem'}}>
             {[{l:'Follower',v:stats.followers},{l:'Following',v:stats.following},{l:'Posts',v:stats.posts}].map(s =>
               <div key={s.l} style={{background:'rgba(255,255,255,0.04)',borderRadius:'0.5rem',padding:'0.5rem',textAlign:'center'}}>
@@ -170,8 +164,6 @@ function InstaCard({ item, upd }) {
               </div>
             )}
           </div>
-
-          {/* Social Blade link */}
           {socialBladeUrl && (
             <a href={socialBladeUrl} target="_blank" rel="noopener noreferrer"
               style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'0.4rem',padding:'0.4rem',background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'0.5rem',textDecoration:'none',fontSize:'0.52rem',color:'#888',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',fontFamily:"'Barlow',sans-serif"}}>
@@ -180,10 +172,9 @@ function InstaCard({ item, upd }) {
           )}
         </div>
       )}
-
       {stats && stats.followers === 'N/A' && handle && (
         <div style={{padding:'0.7rem 1rem',fontSize:'0.62rem',color:'#666',textAlign:'center'}}>
-          Keine Daten gefunden für @{handle}
+          Keine Daten für @{handle} gefunden
           {socialBladeUrl && <a href={socialBladeUrl} target="_blank" rel="noopener noreferrer" style={{color:'#D4AF37',textDecoration:'none',marginLeft:'0.5rem'}}>Social Blade ↗</a>}
         </div>
       )}
@@ -199,6 +190,7 @@ export default function FiveAsideMasterApp() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [db, setDb] = useState(null);
+  const [imgAdjusted, setImgAdjusted] = useState({});
   const rowId = useRef(null);
   const fileInputRef = useRef(null);
   const saveTimer = useRef(null);
@@ -208,10 +200,7 @@ export default function FiveAsideMasterApp() {
       try {
         const { data, error } = await supabase.from('data_store').select('id, content').limit(1).single();
         if (error) throw error;
-        if (data) {
-          rowId.current = data.id;
-          setDb({ athletes: [], brands: [], rightsholder: [], ...data.content });
-        }
+        if (data) { rowId.current = data.id; setDb({ athletes: [], brands: [], rightsholder: [], ...data.content }); }
       } catch { setLoadError(true); }
       setLoading(false);
     };
@@ -277,7 +266,6 @@ export default function FiveAsideMasterApp() {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
-
   if (loadError || !db) return (
     <div style={{minHeight:'100vh',background:'#191919',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem'}}>
       <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.3em',fontSize:'0.75rem',color:'#ff3b3b'}}>Verbindungsfehler — Seite neu laden</p>
@@ -290,8 +278,8 @@ export default function FiveAsideMasterApp() {
     *{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;box-sizing:border-box;}
     body{margin:0;background:#191919;font-family:'Barlow',sans-serif;}
     .wrap{width:100%;max-width:1440px;margin:0 auto;padding:2rem 3rem;}
-    .app-header{display:flex;justify-content:space-between;align-items:center;padding:1.4rem 3rem;border-bottom:1px solid rgba(255,255,255,0.08);background:#191919;position:sticky;top:0;z-index:100;}
-    .logo-img{height:110px;width:auto;object-fit:contain;cursor:pointer;}
+    .app-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 3rem;border-bottom:1px solid rgba(255,255,255,0.08);background:#191919;position:sticky;top:0;z-index:100;}
+    .logo-img{height:160px;width:auto;object-fit:contain;cursor:pointer;}
     .logo-sub{display:flex;align-items:center;gap:0.4rem;margin-top:0.3rem;}
     .dot{width:6px;height:6px;background:#2ecc71;border-radius:50%;animation:pulseDot 2s infinite;}
     @keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.4}}
@@ -451,13 +439,13 @@ export default function FiveAsideMasterApp() {
             </div>
             <div className="cards-grid">
               {ranked.map((it, idx) => (
-                <div key={it.id} className="item-card" onClick={()=>{setSelectedId(it.id);setView('detail');}}>
+                <div key={it.id} className="item-card" onClick={()=>{setSelectedId(it.id);setView('detail');setImgAdjusted({});}}>
                   <div className="rank-badge">#{idx+1}</div>
                   <div className="card-img">
                     {it.image ? <img src={it.image} alt={it.name} style={{objectPosition:`${it.imgX??50}% ${it.imgY??50}%`}}/> : <User size={52} color="#333"/>}
                   </div>
                   <div className="card-name">{it.name}</div>
-                  <div className="card-sub">{activeTab==='athletes'?`${it.sport||''} ${it.league?'· '+it.league:''}`:it.industry||''}</div>
+                  <div className="card-sub">{activeTab==='athletes'?`${it.sport||''}${it.league?' · '+it.league:''}`:it.industry||''}</div>
                   <div className="card-footer">
                     <span style={{fontSize:'0.48rem',color:'#555',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.12em'}}>Score {calcScores(it.scores,cfg).total.toFixed(1)}</span>
                     <button className="card-delete-btn" onClick={e=>del(it.id,e)}><Trash2 size={11}/> Löschen</button>
@@ -480,7 +468,9 @@ export default function FiveAsideMasterApp() {
                     </div>
                     <input type="file" style={{display:'none'}} ref={fileInputRef} onChange={e=>{
                       const f=e.target.files[0]; if(!f) return;
-                      const r=new FileReader(); r.onloadend=()=>upd(item.id,'image',r.result); r.readAsDataURL(f);
+                      const r=new FileReader();
+                      r.onloadend=()=>{ upd(item.id,'image',r.result); setImgAdjusted(prev=>({...prev,[item.id]:false})); };
+                      r.readAsDataURL(f);
                     }}/>
                     <div className="avatar-overlay" onClick={()=>fileInputRef.current.click()}><Upload size={18} color="#fff"/></div>
                   </div>
@@ -488,6 +478,7 @@ export default function FiveAsideMasterApp() {
                     <input className="name-input" value={item.name} onChange={e=>upd(item.id,'name',e.target.value)}/>
                   </div>
                 </div>
+
                 <div className="meta-grid">
                   <div className="meta-field">
                     <div className="meta-label">Sportart</div>
@@ -509,9 +500,16 @@ export default function FiveAsideMasterApp() {
                     <div className="meta-label">Erfolge</div>
                     <textarea className="meta-textarea" value={item.erfolge||''} onChange={e=>upd(item.id,'erfolge',e.target.value)} placeholder="Titel, Auszeichnungen, Erfolge…"/>
                   </div>
-                  {item.image && (
+
+                  {item.image && !imgAdjusted[item.id] && (
                     <div className="img-pos-wrap">
-                      <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.4rem'}}><Move size={10} color="#888"/> Bildausschnitt anpassen</div>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                        <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.4rem'}}><Move size={10} color="#888"/> Bildausschnitt anpassen</div>
+                        <button onClick={()=>setImgAdjusted(prev=>({...prev,[item.id]:true}))}
+                          style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.3)',borderRadius:'0.4rem',padding:'0.2rem 0.7rem',fontSize:'0.52rem',fontWeight:700,color:'#D4AF37',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',letterSpacing:'0.1em'}}>
+                          ✓ Fertig
+                        </button>
+                      </div>
                       <div className="img-preview-box"><img src={item.image} alt="preview" style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/></div>
                       <div className="img-pos-controls">
                         <div className="pos-field">
@@ -525,6 +523,15 @@ export default function FiveAsideMasterApp() {
                       </div>
                     </div>
                   )}
+                  {item.image && imgAdjusted[item.id] && (
+                    <div style={{gridColumn:'span 2'}}>
+                      <button onClick={()=>setImgAdjusted(prev=>({...prev,[item.id]:false}))}
+                        style={{background:'none',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.4rem',padding:'0.25rem 0.8rem',fontSize:'0.5rem',fontWeight:700,color:'#666',cursor:'pointer',fontFamily:"'Barlow',sans-serif",textTransform:'uppercase',letterSpacing:'0.1em',display:'flex',alignItems:'center',gap:'0.3rem'}}>
+                        <Move size={10}/> Bildausschnitt anpassen
+                      </button>
+                    </div>
+                  )}
+
                   <InstaCard item={item} upd={upd}/>
                 </div>
               </div>
@@ -554,59 +561,5 @@ export default function FiveAsideMasterApp() {
                     <div className="gs-grade">{getGrade(sc.total)}</div>
                   </div>
                   <div className="gs-bars">
-                    {cfg.map(c => (
+                    {cfg.map(c=>(
                       <div key={c.k} className="gs-bar-row">
-                        <div className="gs-bar-key">{c.abbr}</div>
-                        <div className="gs-bar-track"><div className="gs-bar-fill" style={{width:(item.scores[c.k]*10)+'%'}}/></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="right-col">
-              <div className="matrix-panel">
-                <div className="matrix-header">Live-Matrix</div>
-                <div className="matrix-with-yaxis">
-                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'0.3rem',paddingBottom:'1.6rem'}}>
-                    <div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'space-between',alignItems:'flex-end',paddingRight:'0.2rem'}}>
-                      {[10,8,6,4,2,0].map(n=><span key={n} className="tick">{n}</span>)}
-                    </div>
-                    <div className="y-axis-label">Markt-Impact</div>
-                  </div>
-                  <div className="matrix-inner">
-                    <div className="matrix-canvas">
-                      {[20,40,60,80].map(p=><div key={'h'+p} className="mline-h" style={{top:p+'%'}}/>)}
-                      {[20,40,60,80].map(p=><div key={'v'+p} className="mline-v" style={{left:p+'%'}}/>)}
-                      <div className="mline-center-h"/><div className="mline-center-v"/>
-                      {QUADRANTS.map(q=>(
-                        <div key={q.id} className="quad-label" style={{left:q.sx,top:q.sy,transform:'translate(-50%,-50%)',color:q.id===qid?'rgba(212,175,55,0.65)':'rgba(255,255,255,0.15)',fontWeight:q.id===qid?700:500}}>{q.label}</div>
-                      ))}
-                      <div className="matrix-dot" style={{left:clamp(dotX)+'%',top:clamp(dotY)+'%'}}/>
-                    </div>
-                    <div className="x-ticks">{[0,2,4,6,8,10].map(n=><span key={n} className="tick">{n}</span>)}</div>
-                    <div className="x-axis-label">Management-Synergie</div>
-                  </div>
-                </div>
-                <div className="matrix-bottom-bar">
-                  <div className="mbb-item"><span className="mbb-label">Synergie</span><span className="mbb-val">{sc.synergie.toFixed(1)}</span></div>
-                  <div className="mbb-item"><span className="mbb-label">Impact</span><span className="mbb-val">{sc.impact.toFixed(1)}</span></div>
-                  <div className="qh-box">
-                    <div>
-                      <div className="qh-title">{qdata.id==='tr'?'Anker-Athlet':qdata.id==='tl'?'Entwicklungsprojekt':qdata.id==='br'?'Spezialist':'Kritischer Fall'}</div>
-                      <div className="qh-strat">{qdata.strat}</div>
-                      <div className="qh-desc">{qdata.desc}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <button className="btn-delete-detail" onClick={e=>del(item.id,e)}><Trash2 size={12}/> Delete Permanent</button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-}
