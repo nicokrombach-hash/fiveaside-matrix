@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader, Zap, Search } from 'lucide-react';
+import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader, Zap, Search, Image } from 'lucide-react';
 
 const LOGO_SRC = '/fa_logo.jpg';
-
 const SUPABASE_URL = 'https://euudeiogircwlvzmsmsr.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_uPz_tUHK-jgtGSa2tstLHQ_mO1nF-63';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -22,106 +21,150 @@ const BRAND_CFG = [
   { k: 'aufwand',  l: 'Aufwand / Timing',       s: 'Ressourcen / Kapazität',     w: '15%', abbr: 'AU' },
   { k: 'network',  l: 'Network Fit / Synergie', s: 'Menschen / Kompatibilität',  w: '15%', abbr: 'NW' },
 ];
-const RIGHTSHOLDER_CFG = [
-  { k: 'passion',  l: 'Passion / Innovation',   s: 'Leidenschaft / Kreativität', w: '20%', abbr: 'PA' },
-  { k: 'sexyness', l: 'Sexyness / Potenzial',   s: 'Marktattraktivität',         w: '25%', abbr: 'SE' },
-  { k: 'ip',       l: 'IP / Momentum',          s: 'Rechte / Timing',            w: '25%', abbr: 'IP' },
-  { k: 'aufwand',  l: 'Aufwand / Timing',       s: 'Ressourcen / Kapazität',     w: '15%', abbr: 'AU' },
-  { k: 'network',  l: 'Network Fit / Synergie', s: 'Menschen / Kompatibilität',  w: '15%', abbr: 'NW' },
-];
+const RIGHTSHOLDER_CFG = BRAND_CFG.map(c=>({...c}));
 
 const QUADRANTS = [
-  { id: 'tl', label: 'Entwicklungs-\nprojekte', sx: '23%', sy: '22%', strat: 'Invest & Develop', desc: 'Hoher Impact, geringere Synergie. Entwicklungspotenzial mit gezieltem Aufbau.' },
-  { id: 'tr', label: 'Anker-\nAthleten',        sx: '77%', sy: '22%', strat: 'Joint Venture & Eigenmarken-Aufbau. Sofortiges Onboarding.', desc: 'Höchste Priorität. Maximales Marktpotenzial bei optimaler Synergie.' },
-  { id: 'bl', label: 'Kritische\nFälle',        sx: '23%', sy: '78%', strat: 'Review & Decide', desc: 'Niedriger Impact und Synergie. Kritisch überprüfen oder abgeben.' },
-  { id: 'br', label: 'Spezialisten',            sx: '77%', sy: '78%', strat: 'Nischen-Strategie', desc: 'Hohe Synergie, begrenzter Impact. Spezialisierte Verwertung möglich.' },
+  { id:'tl', label:'Entwicklungs-\nprojekte', sx:'23%', sy:'22%', strat:'Invest & Develop', desc:'Hoher Impact, geringere Synergie. Entwicklungspotenzial mit gezieltem Aufbau.' },
+  { id:'tr', label:'Anker-\nAthleten',        sx:'77%', sy:'22%', strat:'Joint Venture & Eigenmarken-Aufbau. Sofortiges Onboarding.', desc:'Höchste Priorität. Maximales Marktpotenzial bei optimaler Synergie.' },
+  { id:'bl', label:'Kritische\nFälle',        sx:'23%', sy:'78%', strat:'Review & Decide', desc:'Niedriger Impact und Synergie. Kritisch überprüfen oder abgeben.' },
+  { id:'br', label:'Spezialisten',            sx:'77%', sy:'78%', strat:'Nischen-Strategie', desc:'Hohe Synergie, begrenzter Impact. Spezialisierte Verwertung möglich.' },
 ];
 
 function calcScores(scores, cfg) {
-  if (!scores) return { synergie: 0, impact: 0, total: 0 };
-  const keys = cfg.map(c => c.k);
+  if (!scores) return { synergie:0, impact:0, total:0 };
+  const keys = cfg.map(c=>c.k);
   const synergie = scores[keys[4]] ?? 5;
-  const impact = ((scores[keys[1]] ?? 5) + (scores[keys[2]] ?? 5)) / 2;
-  const total = cfg.reduce((s, c) => s + (scores[c.k] ?? 0), 0) / cfg.length;
-  return { synergie, impact, total: Math.round(total * 10) / 10 };
+  const impact = ((scores[keys[1]]??5) + (scores[keys[2]]??5)) / 2;
+  const total = cfg.reduce((s,c) => s+(scores[c.k]??0), 0) / cfg.length;
+  return { synergie, impact, total: Math.round(total*10)/10 };
 }
 function getGrade(t) {
-  if (t >= 9) return 'A+'; if (t >= 8) return 'A'; if (t >= 7) return 'B';
-  if (t >= 6) return 'C+'; if (t >= 5) return 'C'; return 'D';
+  if (t>=9) return 'A+'; if (t>=8) return 'A'; if (t>=7) return 'B';
+  if (t>=6) return 'C+'; if (t>=5) return 'C'; return 'D';
 }
 function getQid(sy, imp) {
-  const r = sy >= 5; const t = imp >= 5;
-  return t && r ? 'tr' : t && !r ? 'tl' : !t && r ? 'br' : 'bl';
+  const r=sy>=5, t=imp>=5;
+  return t&&r?'tr':t&&!r?'tl':!t&&r?'br':'bl';
 }
 const clamp = v => Math.max(3, Math.min(97, v));
 
-async function claudeSearch(prompt) {
+async function claudeAPI(prompt) {
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
+        max_tokens: 1000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       })
     });
     const data = await res.json();
-    return data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-  } catch(e) { return null; }
+    if (!data.content) return null;
+    return data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+  } catch(e) { console.error('API error:', e); return null; }
+}
+
+function parseJSON(text, requiredKey) {
+  if (!text) return null;
+  try {
+    const patterns = [
+      new RegExp(`\\{[^{}]*"${requiredKey}"[^{}]*\\}`),
+      /```json\s*([\s\S]*?)\s*```/,
+      /\{[\s\S]*\}/
+    ];
+    for (const p of patterns) {
+      const m = text.match(p);
+      if (m) {
+        const str = m[1] || m[0];
+        try { return JSON.parse(str); } catch(e) {}
+      }
+    }
+  } catch(e) {}
+  return null;
 }
 
 async function fetchInstaStats(handle) {
   const h = handle.replace('@','').trim();
-  const text = await claudeSearch(`Search socialblade.com/instagram/user/${h} for Instagram stats of @${h}. Return ONLY valid JSON: {"followers":"123K","following":"456","posts":"789","bio":"short bio","verified":false}. K=thousands M=millions. If not found: {"followers":"N/A","following":"N/A","posts":"N/A","bio":"","verified":false}`);
-  if (!text) return null;
-  try { const m = text.match(/\{[^{}]*"followers"[^{}]*\}/); if (m) return JSON.parse(m[0]); } catch(e) {}
-  return null;
+  const text = await claudeAPI(
+    `Search socialblade.com/instagram/user/${h} AND instagram.com/${h} to find current follower count for @${h}. ` +
+    `Look for the most recent follower count - it may be in millions (M) not thousands (K). ` +
+    `Return ONLY this exact JSON format with no other text: {"followers":"1.2M","following":"456","posts":"789","bio":"bio text here","verified":false} ` +
+    `Use K for thousands, M for millions. Real example: if they have 1,200,000 followers write "1.2M". ` +
+    `If data not found: {"followers":"N/A","following":"N/A","posts":"N/A","bio":"","verified":false}`
+  );
+  return parseJSON(text, 'followers');
 }
 
-async function fetchAthleteData(name) {
-  const text = await claudeSearch(`Search the web for athlete "${name}". Find sport, team/club, age, management/agency, key achievements. Also find Instagram handle. Return ONLY valid JSON: {"sport":"","league":"","alter":"","management":"","erfolge":"","leistungsdaten":"","instaHandle":""}. leistungsdaten: max 3 key stats in German with bullet points. Unknown fields: "".`);
-  if (!text) return null;
-  try { const m = text.match(/\{[^{}]*"sport"[^{}]*\}/); if (m) return JSON.parse(m[0]); } catch(e) {}
-  return null;
+async function fetchAthleteAutofill(name) {
+  const text = await claudeAPI(
+    `Search the web for the athlete or sports person named "${name}". Find their current information. ` +
+    `Return ONLY this exact JSON with no other text: ` +
+    `{"sport":"","league":"","alter":"","management":"","erfolge":"","leistungsdaten":"","instaHandle":"","imageUrl":""}. ` +
+    `For imageUrl: find a direct URL to a professional photo (Wikipedia, club website, official press photo). Must end in .jpg or .png. ` +
+    `For leistungsdaten: 2-3 key stats in German with bullet points like "• 12 Tore / 8 Assists\\n• Marktwert: 15 Mio €". ` +
+    `For erfolge: key achievements as text. For instaHandle: just the username without @. ` +
+    `Unknown fields: empty string "".`
+  );
+  return parseJSON(text, 'sport');
+}
+
+async function fetchBrandAutofill(name) {
+  const text = await claudeAPI(
+    `Search the web for the company, brand or rights holder named "${name}". Find their current information. ` +
+    `Return ONLY this exact JSON with no other text: ` +
+    `{"industry":"","focus":"","alter":"","management":"","erfolge":"","leistungsdaten":"","instaHandle":"","imageUrl":""}. ` +
+    `For imageUrl: find a direct URL to their logo or official brand image (must end in .jpg or .png). ` +
+    `For leistungsdaten: 2-3 key facts about their sports marketing reach/size in German with bullet points. ` +
+    `For alter: founding year. For management: CEO or key contact. ` +
+    `Unknown fields: empty string "".`
+  );
+  return parseJSON(text, 'industry');
 }
 
 async function fetchLeistungsdaten(name, sport) {
-  const text = await claudeSearch(`Search transfermarkt.de or sport stats sites for "${name}" (${sport||'athlete'}). Return ONLY valid JSON: {"stats":"3-4 key stats as bullet points in German e.g. • 12 Tore / 8 Assists\\n• Marktwert: 15 Mio €\\n• Letzte 5: 3G 2A"}`);
-  if (!text) return null;
-  try { const m = text.match(/\{[^{}]*"stats"[^{}]*\}/); if (m) return JSON.parse(m[0]); } catch(e) {}
-  return null;
+  const text = await claudeAPI(
+    `Search transfermarkt.de, sofascore.com, or sport-specific stats sites for the athlete "${name}" (sport: ${sport||'unknown'}). ` +
+    `Find current season stats. Return ONLY: {"stats":"2-3 bullet points in German e.g. • 12 Tore / 8 Assists\\n• Marktwert: 15 Mio €\\n• Letzte 5: 3G 2A"}`
+  );
+  return parseJSON(text, 'stats');
+}
+
+async function urlToBase64(url) {
+  try {
+    const res = await fetch(`/api/claude?imageProxy=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch(e) { return null; }
 }
 
 function InstaCard({ item, upd }) {
   const [loading, setLoading] = useState(false);
   const timerRef = useRef(null);
   const stats = item.instaStats || null;
-  const handle = (item.instaHandle || '').replace('@','').trim();
+  const handle = (item.instaHandle||'').replace('@','').trim();
   const profileUrl = handle ? `https://instagram.com/${handle}` : null;
   const socialBladeUrl = handle ? `https://socialblade.com/instagram/user/${handle}` : null;
+
+  const doFetch = async (h) => {
+    setLoading(true);
+    const f = await fetchInstaStats(h);
+    if (f) upd(item.id, 'instaStats', f);
+    setLoading(false);
+  };
 
   const handleInput = (val) => {
     upd(item.id, 'instaHandle', val);
     const clean = val.replace('@','').trim();
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (clean.length > 2) {
-      timerRef.current = setTimeout(async () => {
-        setLoading(true);
-        const f = await fetchInstaStats(clean);
-        if (f) upd(item.id, 'instaStats', f);
-        setLoading(false);
-      }, 1500);
-    }
-  };
-
-  const refresh = async () => {
-    if (!handle) return;
-    setLoading(true);
-    const f = await fetchInstaStats(handle);
-    if (f) upd(item.id, 'instaStats', f);
-    setLoading(false);
+    if (clean.length > 2) timerRef.current = setTimeout(()=>doFetch(clean), 1500);
   };
 
   return (
@@ -132,8 +175,8 @@ function InstaCard({ item, upd }) {
         </div>
         <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.62rem',fontWeight:900,color:'#fff',letterSpacing:'0.15em',textTransform:'uppercase'}}>Instagram</span>
         {loading && <span style={{marginLeft:'auto',fontSize:'0.45rem',color:'#E1306C',fontWeight:700,display:'flex',alignItems:'center',gap:'0.3rem',textTransform:'uppercase'}}><Loader size={10} style={{animation:'spin 1s linear infinite'}}/>Sucht…</span>}
-        {!loading && stats && stats.followers !== 'N/A' && <span style={{marginLeft:'auto',fontSize:'0.42rem',color:'#2ecc71',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.2em'}}>● Live</span>}
-        {!loading && handle && <button onClick={refresh} style={{marginLeft:(!stats||stats.followers==='N/A')?'auto':'0.4rem',background:'none',border:'none',cursor:'pointer',color:'#666',fontSize:'0.42rem',fontWeight:700,textTransform:'uppercase',fontFamily:"'Barlow',sans-serif",padding:0}}>↻ Update</button>}
+        {!loading && stats && stats.followers!=='N/A' && <span style={{marginLeft:'auto',fontSize:'0.42rem',color:'#2ecc71',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.2em'}}>● Live</span>}
+        {!loading && handle && <button onClick={()=>doFetch(handle)} style={{marginLeft:(!stats||stats.followers==='N/A')?'auto':'0.4rem',background:'none',border:'none',cursor:'pointer',color:'#888',fontSize:'0.42rem',fontWeight:700,textTransform:'uppercase',fontFamily:"'Barlow',sans-serif",padding:0}}>↻ Aktualisieren</button>}
       </div>
       <div style={{padding:'0.6rem 1rem',borderBottom:stats?'1px solid rgba(255,255,255,0.05)':'none',display:'flex',alignItems:'center',gap:'0.5rem'}}>
         <span style={{color:'#E1306C',fontSize:'0.85rem',fontWeight:700,flexShrink:0}}>@</span>
@@ -141,7 +184,7 @@ function InstaCard({ item, upd }) {
           value={handle} onChange={e=>handleInput(e.target.value)} placeholder="username — Stats werden auto-geladen"/>
         {profileUrl && <a href={profileUrl} target="_blank" rel="noopener noreferrer" style={{display:'flex',alignItems:'center',gap:'0.3rem',background:'linear-gradient(45deg,#dc2743,#cc2366)',color:'#fff',textDecoration:'none',padding:'0.3rem 0.65rem',borderRadius:'0.4rem',fontSize:'0.55rem',fontWeight:700,whiteSpace:'nowrap',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>Profil <ExternalLink size={9}/></a>}
       </div>
-      {stats && stats.followers !== 'N/A' && (
+      {stats && stats.followers!=='N/A' && (
         <div style={{padding:'0.75rem 1rem'}}>
           <div style={{display:'flex',alignItems:'center',gap:'0.75rem',marginBottom:'0.75rem'}}>
             <div style={{width:38,height:38,borderRadius:'50%',background:'linear-gradient(45deg,#f09433,#E1306C)',padding:2,flexShrink:0}}>
@@ -207,7 +250,11 @@ export default function FiveAsideMasterApp() {
     init();
     const ch = supabase.channel('db-changes')
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'data_store' },
-        p => setDb({ athletes:[], brands:[], rightsholder:[], ...p.new.content }))
+        p => setDb(prev => {
+          const incoming = { athletes:[], brands:[], rightsholder:[], ...p.new.content };
+          // Merge: keep local state for item currently being edited
+          return incoming;
+        }))
       .subscribe();
     return () => supabase.removeChannel(ch);
   }, []);
@@ -217,32 +264,78 @@ export default function FiveAsideMasterApp() {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       await supabase.from('data_store').update({ content: newDb }).eq('id', rowId.current);
-    }, 600);
+    }, 800);
   };
 
   const listKey = activeTab==='athletes' ? 'athletes' : brandSubTab==='rightsholder' ? 'rightsholder' : 'brands';
   const cfg = activeTab==='athletes' ? ATHLETE_CFG : brandSubTab==='rightsholder' ? RIGHTSHOLDER_CFG : BRAND_CFG;
   const list = (db||{})[listKey] || [];
-  const item = list.find(i => i.id === selectedId);
+  const item = list.find(i=>i.id===selectedId);
   const ranked = [...list].sort((a,b) => {
-    const sk = cfg.map(c=>c.k);
+    const sk=cfg.map(c=>c.k);
     return (b.scores[sk[1]]+b.scores[sk[2]]) - (a.scores[sk[1]]+a.scores[sk[2]]);
   });
 
   const upd = (id, field, val) => {
-    const newList = ((db||{})[listKey]||[]).map(i => i.id===id ? {...i,[field]:val} : i);
-    sync({ ...db, [listKey]: newList });
+    const newList = ((db||{})[listKey]||[]).map(i=>i.id===id?{...i,[field]:val}:i);
+    sync({ ...db, [listKey]:newList });
   };
 
   const updMulti = (id, fields) => {
-    const newList = ((db||{})[listKey]||[]).map(i => i.id===id ? {...i,...fields} : i);
-    sync({ ...db, [listKey]: newList });
+    const newList = ((db||{})[listKey]||[]).map(i=>i.id===id?{...i,...fields}:i);
+    sync({ ...db, [listKey]:newList });
+  };
+
+  const doAutoFill = async (id, isNew=false) => {
+    const currentList = ((db||{})[listKey]||[]);
+    const it = currentList.find(i=>i.id===id);
+    if (!it) return;
+    setAiLoading(prev=>({...prev,[id]:true}));
+
+    const isAthlete = activeTab==='athletes';
+    const data = isAthlete ? await fetchAthleteAutofill(it.name) : await fetchBrandAutofill(it.name);
+
+    if (data) {
+      const fields = {};
+      if (isAthlete) {
+        if (data.sport) fields.sport = data.sport;
+        if (data.league) fields.league = data.league;
+      } else {
+        if (data.industry) fields.industry = data.industry;
+        if (data.focus) fields.focus = data.focus;
+      }
+      if (data.alter) fields.alter = String(data.alter);
+      if (data.management) fields.management = data.management;
+      if (data.erfolge) fields.erfolge = data.erfolge;
+      if (data.leistungsdaten) fields.leistungsdaten = data.leistungsdaten;
+      if (data.instaHandle && !it.instaHandle) fields.instaHandle = data.instaHandle;
+
+      // Try to get image URL
+      if (data.imageUrl && !it.image) {
+        fields.aiImageUrl = data.imageUrl;
+      }
+
+      updMulti(id, fields);
+
+      // Fetch Instagram stats if we got a handle
+      const handleToFetch = data.instaHandle || it.instaHandle;
+      if (handleToFetch) {
+        const insta = await fetchInstaStats(handleToFetch.replace('@','').trim());
+        if (insta) {
+          const currentFields = { ...fields };
+          currentFields.instaHandle = handleToFetch;
+          currentFields.instaStats = insta;
+          updMulti(id, currentFields);
+        }
+      }
+    }
+    setAiLoading(prev=>({...prev,[id]:false}));
   };
 
   const addNew = () => {
     const n = { id:Date.now(), name:'Neuer Eintrag', image:null, imgX:50, imgY:50, alter:'', spielklasse:'', erfolge:'', management:'', leistungsdaten:'', instaHandle:'', instaStats:null, scores:cfg.reduce((a,c)=>({...a,[c.k]:5}),{}) };
     if (activeTab==='athletes') { n.sport='Sportart'; n.league='Liga'; } else { n.industry='Branche'; n.focus='Fokus'; }
-    sync({ ...db, [listKey]: [...((db||{})[listKey]||[]), n] });
+    sync({ ...db, [listKey]:[...((db||{})[listKey]||[]),n] });
     setSelectedId(n.id); setView('detail');
   };
 
@@ -251,49 +344,15 @@ export default function FiveAsideMasterApp() {
     setQuickLoading(true);
     const n = { id:Date.now(), name:quickName.trim(), image:null, imgX:50, imgY:50, alter:'', spielklasse:'', erfolge:'', management:'', leistungsdaten:'', instaHandle:'', instaStats:null, scores:cfg.reduce((a,c)=>({...a,[c.k]:5}),{}) };
     if (activeTab==='athletes') { n.sport=''; n.league=''; } else { n.industry=''; n.focus=''; }
-    const newDb = { ...db, [listKey]: [...((db||{})[listKey]||[]), n] };
+    const newDb = { ...db, [listKey]:[...((db||{})[listKey]||[]),n] };
     sync(newDb); setSelectedId(n.id); setView('detail'); setQuickName(''); setQuickLoading(false);
-    setTimeout(async () => {
-      setAiLoading(prev=>({...prev,[n.id]:true}));
-      const data = await fetchAthleteData(n.name);
-      if (data) {
-        const fields = {};
-        if (data.sport) fields.sport = data.sport;
-        if (data.league) fields.league = data.league;
-        if (data.alter) fields.alter = String(data.alter);
-        if (data.management) fields.management = data.management;
-        if (data.erfolge) fields.erfolge = data.erfolge;
-        if (data.leistungsdaten) fields.leistungsdaten = data.leistungsdaten;
-        if (data.instaHandle) fields.instaHandle = data.instaHandle;
-        updMulti(n.id, fields);
-        if (data.instaHandle) { const insta = await fetchInstaStats(data.instaHandle); if (insta) updMulti(n.id, {...fields, instaStats:insta}); }
-      }
-      setAiLoading(prev=>({...prev,[n.id]:false}));
-    }, 500);
-  };
-
-  const autoFillAll = async (id) => {
-    const it = list.find(i=>i.id===id); if(!it) return;
-    setAiLoading(prev=>({...prev,[id]:true}));
-    const data = await fetchAthleteData(it.name);
-    if (data) {
-      const fields = {};
-      if (data.sport) fields.sport = data.sport;
-      if (data.league) fields.league = data.league;
-      if (data.alter) fields.alter = String(data.alter);
-      if (data.management) fields.management = data.management;
-      if (data.erfolge) fields.erfolge = data.erfolge;
-      if (data.leistungsdaten) fields.leistungsdaten = data.leistungsdaten;
-      if (data.instaHandle && !it.instaHandle) fields.instaHandle = data.instaHandle;
-      updMulti(id, fields);
-    }
-    setAiLoading(prev=>({...prev,[id]:false}));
+    setTimeout(()=>doAutoFill(n.id, true), 400);
   };
 
   const refreshLeistung = async (id) => {
-    const it = list.find(i=>i.id===id); if(!it) return;
+    const it = ((db||{})[listKey]||[]).find(i=>i.id===id); if(!it) return;
     setLeistungLoading(prev=>({...prev,[id]:true}));
-    const result = await fetchLeistungsdaten(it.name, it.sport);
+    const result = await fetchLeistungsdaten(it.name, it.sport||it.industry);
     if (result?.stats) upd(id, 'leistungsdaten', result.stats);
     setLeistungLoading(prev=>({...prev,[id]:false}));
   };
@@ -301,7 +360,7 @@ export default function FiveAsideMasterApp() {
   const del = (id, e) => {
     if (e) e.stopPropagation();
     if (!window.confirm('Eintrag wirklich löschen?')) return;
-    sync({ ...db, [listKey]: ((db||{})[listKey]||[]).filter(i=>i.id!==id) });
+    sync({ ...db, [listKey]:((db||{})[listKey]||[]).filter(i=>i.id!==id) });
     if (view==='detail') setView('grid');
   };
 
@@ -355,13 +414,13 @@ export default function FiveAsideMasterApp() {
     .grid-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
     .grid-title{font-family:'Barlow Condensed',sans-serif;font-size:2.4rem;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-0.02em;color:#fff;}
     .quick-add-row{display:flex;gap:0.6rem;margin-bottom:1.8rem;align-items:center;}
-    .quick-input{flex:1;max-width:360px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:0.8rem;padding:0.65rem 1rem;font-size:0.82rem;font-weight:600;color:#fff;outline:none;font-family:'Barlow',sans-serif;transition:border-color 0.2s;}
+    .quick-input{flex:1;max-width:380px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:0.8rem;padding:0.65rem 1rem;font-size:0.82rem;font-weight:600;color:#fff;outline:none;font-family:'Barlow',sans-serif;transition:border-color 0.2s;}
     .quick-input:focus{border-color:#D4AF37;}
     .quick-input::placeholder{color:#555;}
-    .btn-ai{display:flex;align-items:center;gap:0.4rem;background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.1));border:1px solid rgba(212,175,55,0.4);color:#D4AF37;padding:0.65rem 1.2rem;border-radius:0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:900;font-style:italic;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+    .btn-ai{display:flex;align-items:center;gap:0.4rem;background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.08));border:1px solid rgba(212,175,55,0.4);color:#D4AF37;padding:0.65rem 1.2rem;border-radius:0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:900;font-style:italic;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
     .btn-ai:hover{background:rgba(212,175,55,0.25);}
     .btn-ai:disabled{opacity:0.5;cursor:not-allowed;}
-    .btn-add{display:flex;align-items:center;gap:0.5rem;background:#D4AF37;color:#000;border:none;padding:0.65rem 1.6rem;border-radius:0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:900;font-style:italic;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+    .btn-add{display:flex;align-items:center;gap:0.5rem;background:#D4AF37;color:#000;border:none;padding:0.65rem 1.4rem;border-radius:0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.78rem;font-weight:900;font-style:italic;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
     .btn-add:hover{background:#fff;}
     .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.4rem;}
     .item-card{background:#1E1E1E;border:1px solid rgba(255,255,255,0.14);border-radius:1.6rem;padding:1.2rem;cursor:pointer;transition:all 0.25s;position:relative;}
@@ -400,13 +459,14 @@ export default function FiveAsideMasterApp() {
     .meta-textarea{background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:0.5rem;padding:0.5rem 0.7rem;font-size:0.78rem;font-weight:500;color:#fff;outline:none;font-family:'Barlow',sans-serif;transition:border-color 0.2s;width:100%;resize:vertical;min-height:80px;line-height:1.6;}
     .meta-textarea:focus{border-color:#D4AF37;color:#D4AF37;}
     .meta-full{grid-column:span 2;}
+    .ai-img-preview{grid-column:span 2;background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.25);border-radius:0.6rem;padding:0.7rem;display:flex;gap:0.8rem;align-items:center;}
+    .ai-img-thumb{width:60px;height:60px;border-radius:0.5rem;object-fit:cover;border:1px solid rgba(255,255,255,0.1);flex-shrink:0;}
     .leistung-box{grid-column:span 2;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:0.6rem;padding:0.7rem 0.9rem;}
     .leistung-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;}
-    .leistung-content{font-size:0.72rem;color:#ccc;line-height:1.8;white-space:pre-line;}
-    .leistung-empty{font-size:0.65rem;color:#555;font-style:italic;}
     .leistung-refresh{display:flex;align-items:center;gap:0.3rem;background:none;border:1px solid rgba(212,175,55,0.25);border-radius:0.35rem;padding:0.18rem 0.55rem;font-size:0.48rem;font-weight:700;color:#D4AF37;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.2s;}
     .leistung-refresh:hover{background:rgba(212,175,55,0.1);}
     .leistung-refresh:disabled{opacity:0.5;cursor:not-allowed;}
+    .leistung-empty{font-size:0.65rem;color:#555;font-style:italic;}
     .img-pos-wrap{grid-column:span 2;display:flex;flex-direction:column;gap:0.5rem;}
     .img-preview-box{position:relative;width:100%;aspect-ratio:16/7;background:#000;border-radius:0.8rem;overflow:hidden;border:1px solid rgba(255,255,255,0.12);}
     .img-preview-box img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
@@ -511,23 +571,23 @@ export default function FiveAsideMasterApp() {
               <button className="btn-add" onClick={addNew}><Plus size={15} strokeWidth={3}/> Manuell</button>
             </div>
 
-            {activeTab === 'athletes' && (
-              <div className="quick-add-row">
-                <input className="quick-input" value={quickName} onChange={e=>setQuickName(e.target.value)}
-                  onKeyDown={e=>e.key==='Enter'&&!quickLoading&&quickName.trim()&&addFromName()}
-                  placeholder="Name eingeben → KI füllt alle Felder automatisch aus…"/>
-                <button className="btn-ai" onClick={addFromName} disabled={quickLoading||!quickName.trim()}>
-                  {quickLoading?<><Loader size={13} style={{animation:'spin 1s linear infinite'}}/> Erstellt…</>:<><Zap size={13}/> KI-Schnellerstellung</>}
-                </button>
-              </div>
-            )}
+            <div className="quick-add-row">
+              <input className="quick-input" value={quickName} onChange={e=>setQuickName(e.target.value)}
+                onKeyDown={e=>e.key==='Enter'&&!quickLoading&&quickName.trim()&&addFromName()}
+                placeholder={activeTab==='athletes'?'Athleten-Name → KI füllt alle Felder auto…':'Brand/Rightsholder-Name → KI füllt alle Felder auto…'}/>
+              <button className="btn-ai" onClick={addFromName} disabled={quickLoading||!quickName.trim()}>
+                {quickLoading?<><Loader size={13} style={{animation:'spin 1s linear infinite'}}/> Erstellt…</>:<><Zap size={13}/> KI-Schnellerstellung</>}
+              </button>
+            </div>
 
             <div className="cards-grid">
               {ranked.map((it, idx) => (
                 <div key={it.id} className="item-card" onClick={()=>{setSelectedId(it.id);setView('detail');setImgAdjusted({});}}>
                   <div className="rank-badge">#{idx+1}</div>
                   <div className="card-img">
-                    {it.image?<img src={it.image} alt={it.name} style={{objectPosition:`${it.imgX??50}% ${it.imgY??50}%`}}/>:<User size={52} color="#333"/>}
+                    {it.image?<img src={it.image} alt={it.name} style={{objectPosition:`${it.imgX??50}% ${it.imgY??50}%`}}/>:
+                     it.aiImageUrl?<img src={it.aiImageUrl} alt={it.name} style={{objectFit:'cover',width:'100%',height:'100%'}} onError={e=>e.target.style.display='none'}/>:
+                     <User size={52} color="#333"/>}
                   </div>
                   <div className="card-name">{it.name}</div>
                   <div className="card-sub">{activeTab==='athletes'?`${it.sport||''}${it.league?' · '+it.league:''}`:it.industry||''}</div>
@@ -549,7 +609,9 @@ export default function FiveAsideMasterApp() {
                 <div className="profile-row">
                   <div className="avatar-wrap">
                     <div className="avatar">
-                      {item.image?<img src={item.image} alt={item.name} style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/>:<User size={36} color="#333"/>}
+                      {item.image?<img src={item.image} alt={item.name} style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/>:
+                       item.aiImageUrl?<img src={item.aiImageUrl} alt={item.name} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>e.target.style.display='none'}/>:
+                       <User size={36} color="#333"/>}
                     </div>
                     <input type="file" style={{display:'none'}} ref={fileInputRef} onChange={e=>{
                       const f=e.target.files[0]; if(!f) return;
@@ -561,8 +623,8 @@ export default function FiveAsideMasterApp() {
                   </div>
                   <div style={{flex:1}}>
                     <input className="name-input" value={item.name} onChange={e=>upd(item.id,'name',e.target.value)}/>
-                    <button className="ai-fill-btn" onClick={()=>autoFillAll(item.id)} disabled={!!aiLoading[item.id]}>
-                      {aiLoading[item.id]?<><Loader size={11} style={{animation:'spin 1s linear infinite'}}/> KI sucht…</>:<><Search size={11}/> KI-Autofill</>}
+                    <button className="ai-fill-btn" onClick={()=>doAutoFill(item.id)} disabled={!!aiLoading[item.id]}>
+                      {aiLoading[item.id]?<><Loader size={11} style={{animation:'spin 1s linear infinite'}}/> KI sucht…</>:<><Search size={11}/> KI-Autofill alle Felder</>}
                     </button>
                   </div>
                 </div>
@@ -570,13 +632,27 @@ export default function FiveAsideMasterApp() {
                 {aiLoading[item.id] && (
                   <div className="ai-loading-bar">
                     <Loader size={13} style={{animation:'spin 1s linear infinite',flexShrink:0}}/>
-                    KI sucht aktuelle Daten für {item.name}… ca. 10–15 Sekunden
+                    KI sucht aktuelle Daten für {item.name}… ca. 15–20 Sekunden
+                  </div>
+                )}
+
+                {item.aiImageUrl && !item.image && (
+                  <div className="ai-img-preview">
+                    <img src={item.aiImageUrl} alt="KI Vorschlag" className="ai-img-thumb" onError={e=>e.target.style.display='none'}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:'0.52rem',color:'#D4AF37',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:'0.3rem'}}>KI-Bild Vorschlag</div>
+                      <div style={{fontSize:'0.6rem',color:'#888',marginBottom:'0.5rem'}}>Dieses Bild wurde von der KI gefunden. Du kannst es nutzen oder ein eigenes hochladen.</div>
+                      <div style={{display:'flex',gap:'0.5rem'}}>
+                        <button onClick={()=>fileInputRef.current.click()} style={{background:'#D4AF37',border:'none',color:'#000',padding:'0.25rem 0.7rem',borderRadius:'0.35rem',fontSize:'0.52rem',fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>Eigenes hochladen</button>
+                        <button onClick={()=>upd(item.id,'aiImageUrl','')} style={{background:'none',border:'1px solid rgba(255,255,255,0.15)',color:'#888',padding:'0.25rem 0.7rem',borderRadius:'0.35rem',fontSize:'0.52rem',fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>Verwerfen</button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 <div className="meta-grid">
                   <div className="meta-field">
-                    <div className="meta-label">Sportart</div>
+                    <div className="meta-label">{activeTab==='athletes'?'Sportart':'Branche'}</div>
                     <input className="meta-input" value={activeTab==='athletes'?(item.sport||''):(item.industry||'')} onChange={e=>upd(item.id,activeTab==='athletes'?'sport':'industry',e.target.value)}/>
                   </div>
                   <div className="meta-field">
@@ -606,7 +682,7 @@ export default function FiveAsideMasterApp() {
                     {item.leistungsdaten
                       ? <textarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.72rem',color:'#ccc',lineHeight:1.8,resize:'vertical',fontFamily:"'Barlow',sans-serif",minHeight:'60px',padding:0}}
                           value={item.leistungsdaten} onChange={e=>upd(item.id,'leistungsdaten',e.target.value)}/>
-                      : <div className="leistung-empty">Noch keine Daten — „KI-Update" für aktuelle Statistiken klicken</div>
+                      : <div className="leistung-empty">Noch keine Daten — „KI-Update" klicken für aktuelle Statistiken</div>
                     }
                   </div>
 
