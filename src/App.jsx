@@ -574,11 +574,11 @@ export default function FiveAsideMasterApp() {
                 const img=new Image();
                 img.onload=()=>{
                   const canvas=document.createElement('canvas');
-                  const ratio=Math.min(150/img.width,150/img.height,1);
+                  const ratio=Math.min(300/img.width,300/img.height,1);
                   canvas.width=Math.round(img.width*ratio);
                   canvas.height=Math.round(img.height*ratio);
                   canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.25));
+                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.45));
                   setImgAdjusted(p=>({...p,[item.id]:false}));
                 };
                 img.src=rd.result;
