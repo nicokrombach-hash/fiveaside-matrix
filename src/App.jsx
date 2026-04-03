@@ -202,6 +202,161 @@ function InstaCard({ item, upd }) {
   );
 }
 
+// ── BRAND DEALS ──────────────────────────────────────────────────────────────
+const DEAL_STATUS_COLORS = {
+  'Aktiv':        { color:'#22c55e', bg:'rgba(34,197,94,0.12)'  },
+  'In Verhandlung':{ color:'#D4AF37', bg:'rgba(212,175,55,0.12)' },
+  'Abgeschlossen':{ color:'#888',    bg:'rgba(136,136,136,0.12)'},
+  'Geplant':      { color:'#3b82f6', bg:'rgba(59,130,246,0.12)' },
+};
+
+function DealModal({ deal, onClose, onUpdate, onDelete }) {
+  const [d, setD] = React.useState(deal);
+  const sc = DEAL_STATUS_COLORS[d.status] || { color:'#888', bg:'rgba(136,136,136,0.12)' };
+
+  return (
+    <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:'#1E1E1E',border:'1px solid rgba(255,255,255,0.12)',borderRadius:'1.4rem',padding:'1.8rem',width:'100%',maxWidth:'420px',position:'relative'}}>
+        {/* Header */}
+        <div style={{display:'flex',alignItems:'center',gap:'1rem',marginBottom:'1.4rem'}}>
+          {d.logo
+            ? <img src={d.logo} alt={d.brandName} style={{width:48,height:48,borderRadius:'50%',objectFit:'contain',background:'#fff',padding:'4px',border:'2px solid rgba(212,175,55,0.3)'}}/>
+            : <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(212,175,55,0.15)',border:'2px solid rgba(212,175,55,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.1rem',fontWeight:700,color:'#D4AF37',fontFamily:"'Barlow Condensed',sans-serif"}}>{(d.brandName||'?')[0].toUpperCase()}</div>
+          }
+          <div style={{flex:1}}>
+            <input value={d.brandName||''} onChange={e=>setD(p=>({...p,brandName:e.target.value}))}
+              style={{width:'100%',background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,0.1)',outline:'none',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'1.4rem',fontWeight:900,fontStyle:'italic',color:'#D4AF37',padding:'0 0 0.2rem 0'}}
+              placeholder="Markenname"/>
+          </div>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'#666',cursor:'pointer',fontSize:'1.2rem',lineHeight:1,padding:0}}>✕</button>
+        </div>
+
+        {/* Logo URL */}
+        <div style={{marginBottom:'0.8rem'}}>
+          <div style={{fontSize:'0.48rem',textTransform:'uppercase',letterSpacing:'0.22em',fontWeight:700,color:'#888',marginBottom:'0.25rem'}}>Logo URL</div>
+          <input value={d.logo||''} onChange={e=>setD(p=>({...p,logo:e.target.value}))}
+            style={{width:'100%',background:'rgba(0,0,0,0.4)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.5rem',padding:'0.38rem 0.65rem',fontSize:'0.72rem',color:'#fff',outline:'none',fontFamily:"'Barlow',sans-serif",boxSizing:'border-box'}}
+            placeholder="https://logo.clearbit.com/nike.com"/>
+        </div>
+
+        {/* Grid fields */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.65rem',marginBottom:'0.8rem'}}>
+          {[
+            {l:'Laufzeit', k:'duration', ph:'z.B. 2024 – 2026'},
+            {l:'Budget', k:'budget', ph:'z.B. 50.000 €'},
+          ].map(f=>(
+            <div key={f.k}>
+              <div style={{fontSize:'0.48rem',textTransform:'uppercase',letterSpacing:'0.22em',fontWeight:700,color:'#888',marginBottom:'0.25rem'}}>{f.l}</div>
+              <input value={d[f.k]||''} onChange={e=>setD(p=>({...p,[f.k]:e.target.value}))}
+                style={{width:'100%',background:'rgba(0,0,0,0.4)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.5rem',padding:'0.38rem 0.65rem',fontSize:'0.72rem',color:'#fff',outline:'none',fontFamily:"'Barlow',sans-serif",boxSizing:'border-box'}}
+                placeholder={f.ph}/>
+            </div>
+          ))}
+        </div>
+
+        {/* Scope */}
+        <div style={{marginBottom:'0.8rem'}}>
+          <div style={{fontSize:'0.48rem',textTransform:'uppercase',letterSpacing:'0.22em',fontWeight:700,color:'#888',marginBottom:'0.25rem'}}>Leistungsumfang</div>
+          <textarea value={d.scope||''} onChange={e=>setD(p=>({...p,scope:e.target.value}))}
+            style={{width:'100%',background:'rgba(0,0,0,0.4)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.5rem',padding:'0.38rem 0.65rem',fontSize:'0.72rem',color:'#fff',outline:'none',fontFamily:"'Barlow',sans-serif",resize:'vertical',minHeight:'70px',lineHeight:1.6,boxSizing:'border-box'}}
+            placeholder="z.B. 3x Social Media Post, 1x Event, 1x Shoot"/>
+        </div>
+
+        {/* Status dropdown */}
+        <div style={{marginBottom:'1.2rem'}}>
+          <div style={{fontSize:'0.48rem',textTransform:'uppercase',letterSpacing:'0.22em',fontWeight:700,color:'#888',marginBottom:'0.25rem'}}>Status</div>
+          <select value={d.status||'Aktiv'} onChange={e=>setD(p=>({...p,status:e.target.value}))}
+            style={{appearance:'none',background:sc.bg,border:`1px solid ${sc.color}40`,borderRadius:'0.5rem',padding:'0.38rem 0.65rem',fontSize:'0.72rem',fontWeight:700,color:sc.color,cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",width:'100%',outline:'none'}}>
+            {Object.keys(DEAL_STATUS_COLORS).map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        {/* Actions */}
+        <div style={{display:'flex',gap:'0.6rem'}}>
+          <button onClick={()=>onUpdate(d)}
+            style={{flex:1,background:'#D4AF37',border:'none',color:'#000',padding:'0.6rem',borderRadius:'0.7rem',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.78rem',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',cursor:'pointer'}}>
+            Speichern
+          </button>
+          <button onClick={onDelete}
+            style={{background:'none',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',padding:'0.6rem 1rem',borderRadius:'0.7rem',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.72rem',fontWeight:700,cursor:'pointer',textTransform:'uppercase',letterSpacing:'0.05em'}}>
+            Löschen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BrandDealsSection({ item, upd }) {
+  const [modalDeal, setModalDeal] = React.useState(null); // {deal, idx} or {deal:null} for new
+  const deals = item.brandDeals || [];
+
+  const saveDeal = (updated, idx) => {
+    const newDeals = [...deals];
+    if (idx === -1) newDeals.push(updated);
+    else newDeals[idx] = updated;
+    upd(item.id, 'brandDeals', newDeals);
+    setModalDeal(null);
+  };
+
+  const deleteDeal = (idx) => {
+    if (!window.confirm('Deal wirklich löschen?')) return;
+    upd(item.id, 'brandDeals', deals.filter((_,i)=>i!==idx));
+    setModalDeal(null);
+  };
+
+  const newDeal = () => setModalDeal({ deal:{ brandName:'', logo:'', duration:'', budget:'', scope:'', status:'Aktiv' }, idx:-1 });
+
+  return (
+    <>
+      <div style={{gridColumn:'span 2',background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:'0.7rem',padding:'0.8rem 0.9rem'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.7rem'}}>
+          <div style={{fontSize:'0.5rem',textTransform:'uppercase',letterSpacing:'0.32em',fontWeight:900,color:'#888',display:'flex',alignItems:'center',gap:'0.35rem'}}>
+            <span style={{color:'#D4AF37'}}>◆</span> Kooperationen
+          </div>
+          <button onClick={newDeal}
+            style={{width:22,height:22,borderRadius:'50%',background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.35)',color:'#D4AF37',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.85rem',fontWeight:700,lineHeight:1}}>
+            +
+          </button>
+        </div>
+
+        {deals.length === 0
+          ? <div style={{fontSize:'0.6rem',color:'#444',fontStyle:'italic'}}>Noch keine Brand-Deals — + klicken zum Hinzufügen</div>
+          : <div style={{display:'flex',flexWrap:'wrap',gap:'0.6rem',alignItems:'center'}}>
+              {deals.map((d, idx) => {
+                const sc = DEAL_STATUS_COLORS[d.status] || DEAL_STATUS_COLORS['Abgeschlossen'];
+                return (
+                  <button key={idx} onClick={()=>setModalDeal({deal:d,idx})}
+                    title={d.brandName}
+                    style={{position:'relative',width:36,height:36,borderRadius:'50%',border:`2px solid ${sc.color}55`,background:'#111',cursor:'pointer',padding:0,overflow:'hidden',transition:'all 0.18s',flexShrink:0}}>
+                    {d.logo
+                      ? <img src={d.logo} alt={d.brandName} style={{width:'100%',height:'100%',objectFit:'contain',padding:'3px'}} onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}}/>
+                      : null}
+                    <div style={{display:d.logo?'none':'flex',width:'100%',height:'100%',alignItems:'center',justifyContent:'center',fontSize:'0.65rem',fontWeight:900,color:sc.color,fontFamily:"'Barlow Condensed',sans-serif"}}>
+                      {(d.brandName||'?')[0].toUpperCase()}
+                    </div>
+                    {/* Status dot */}
+                    <div style={{position:'absolute',bottom:0,right:0,width:9,height:9,borderRadius:'50%',background:sc.color,border:'1.5px solid #1E1E1E'}}/>
+                  </button>
+                );
+              })}
+            </div>
+        }
+      </div>
+
+      {modalDeal && (
+        <DealModal
+          deal={modalDeal.deal}
+          onClose={()=>setModalDeal(null)}
+          onUpdate={d=>saveDeal(d, modalDeal.idx)}
+          onDelete={()=>deleteDeal(modalDeal.idx)}
+        />
+      )}
+    </>
+  );
+}
+
+
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function FiveAsideMasterApp() {
   const [activeTab, setActiveTab] = useState('home');
@@ -357,7 +512,7 @@ export default function FiveAsideMasterApp() {
   };
 
   const mkNew = () => {
-    const base={id:Date.now(),name:'Neuer Eintrag',image:null,imgX:50,imgY:50,alter:'',erfolge:'',management:'',leistungsdaten:'',instaHandle:'',instaStats:null,aiImageUrl:'',scores:newScores(cfg)};
+    const base={id:Date.now(),name:'Neuer Eintrag',image:null,imgX:50,imgY:50,alter:'',erfolge:'',management:'',leistungsdaten:'',instaHandle:'',instaStats:null,aiImageUrl:'',brandDeals:[],scores:newScores(cfg)};
     if(isBrandOrRH){return{...base,industry:'',focus:'',leadStatus:'neu',linkedinUrl:'',keyEvents:'',notizen:'',sponsoringBudget:'',zielgruppe:'',marketingZiele:'',engagements:'',inventar:'',reichweite:'',fanDemografie:'',werteFit:''};}
     return{...base,sport:'',league:'',spielklasse:''};
   };
@@ -896,6 +1051,7 @@ export default function FiveAsideMasterApp() {
                     </div>
                   )}
                   <InstaCard item={item} upd={upd}/>
+                  <BrandDealsSection item={item} upd={upd}/>
                 </div>
               </div>
             </div>
