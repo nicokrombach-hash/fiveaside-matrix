@@ -222,6 +222,8 @@ export default function FiveAsideMasterApp() {
   const fileInputRef = useRef(null);
   const saveTimer = useRef(null);
 
+  const ignoringRealtime = useRef(false);
+
   useEffect(() => {
     let done = false;
     const finish = () => { if (!done) { done = true; setLoading(false); } };
@@ -247,7 +249,11 @@ export default function FiveAsideMasterApp() {
 
     const ch = supabase.channel('db-changes')
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'data_store'},
-        p=>setDb({athletes:[],brands:[],rightsholder:[],fiveaside_athletes:[],fiveaside_brands:[],...p.new.content}))
+        p => {
+          // Ignore realtime updates right after we saved — prevents slider reset bug
+          if (ignoringRealtime.current) return;
+          setDb({athletes:[],brands:[],rightsholder:[],fiveaside_athletes:[],fiveaside_brands:[],...p.new.content});
+        })
       .subscribe();
     return ()=>{ supabase.removeChannel(ch); clearTimeout(timeout); };
   }, []);
@@ -257,8 +263,14 @@ export default function FiveAsideMasterApp() {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
+        // Block realtime listener while we save to prevent slider/field reset
+        ignoringRealtime.current = true;
         await supabase.from('data_store').update({ content: newDb }).eq('id', rowId.current);
-      } catch(e) { console.error('Save error:', e); }
+        setTimeout(() => { ignoringRealtime.current = false; }, 3000);
+      } catch(e) {
+        console.error('Save error:', e);
+        ignoringRealtime.current = false;
+      }
     }, 800);
   };
 
