@@ -1,4 +1,3 @@
-// @charset utf-8
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader, Zap, Search, Calendar, FileText, BarChart2 } from 'lucide-react';
@@ -253,48 +252,14 @@ export default function FiveAsideMasterApp() {
     return ()=>{ supabase.removeChannel(ch); clearTimeout(timeout); };
   }, []);
 
-  const compressImage = (base64, maxW=600, quality=0.65) => new Promise(resolve => {
-    try {
-      const img = new window.Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ratio = Math.min(maxW / img.width, maxW / img.height, 1);
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = () => resolve(base64);
-      img.src = base64;
-    } catch(e) { resolve(base64); }
-  });
-
   const sync = (newDb) => {
     setDb(newDb);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
-        // Compress images before saving to prevent Supabase size crashes
-        const compressList = async arr => {
-          if (!arr) return arr;
-          return Promise.all(arr.map(async i => {
-            if (i.image && i.image.length > 150000) {
-              return { ...i, image: await compressImage(i.image) };
-            }
-            return i;
-          }));
-        };
-        const safeDb = {
-          ...newDb,
-          athletes: await compressList(newDb.athletes),
-          brands: await compressList(newDb.brands),
-          rightsholder: await compressList(newDb.rightsholder),
-          fiveaside_athletes: await compressList(newDb.fiveaside_athletes),
-          fiveaside_brands: await compressList(newDb.fiveaside_brands),
-        };
-        await supabase.from('data_store').update({ content: safeDb }).eq('id', rowId.current);
+        await supabase.from('data_store').update({ content: newDb }).eq('id', rowId.current);
       } catch(e) { console.error('Save error:', e); }
-    }, 1000);
+    }, 800);
   };
 
   const getListKey = () => {
@@ -560,9 +525,23 @@ export default function FiveAsideMasterApp() {
                item.aiImageUrl?<img src={item.aiImageUrl} alt={item.name} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>e.target.style.display='none'}/>:
                isBrandOrRH?<Building2 size={32} color="#333"/>:<User size={32} color="#333"/>}
             </div>
-            <input type="file" style={{display:'none'}} ref={fileInputRef} onChange={e=>{
+            <input type="file" accept="image/*" style={{display:'none'}} ref={fileInputRef} onChange={e=>{
               const f=e.target.files[0]; if(!f) return;
-              const r=new FileReader(); r.onloadend=()=>{upd(item.id,'image',r.result);setImgAdjusted(p=>({...p,[item.id]:false}));}; r.readAsDataURL(f);
+              const rd=new FileReader();
+              rd.onloadend=()=>{
+                const img=new Image();
+                img.onload=()=>{
+                  const canvas=document.createElement('canvas');
+                  const ratio=Math.min(800/img.width,800/img.height,1);
+                  canvas.width=Math.round(img.width*ratio);
+                  canvas.height=Math.round(img.height*ratio);
+                  canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.75));
+                  setImgAdjusted(p=>({...p,[item.id]:false}));
+                };
+                img.src=rd.result;
+              };
+              rd.readAsDataURL(f);
             }}/>
             <div className="avatar-overlay" onClick={()=>fileInputRef.current.click()}><Upload size={16} color="#fff"/></div>
           </div>
