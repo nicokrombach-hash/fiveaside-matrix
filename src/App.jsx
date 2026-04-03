@@ -263,7 +263,6 @@ export default function FiveAsideMasterApp() {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
-        // Block realtime listener while we save to prevent slider/field reset
         ignoringRealtime.current = true;
         await supabase.from('data_store').update({ content: newDb }).eq('id', rowId.current);
         setTimeout(() => { ignoringRealtime.current = false; }, 3000);
@@ -292,8 +291,14 @@ export default function FiveAsideMasterApp() {
   const item = list.find(i=>i.id===selectedId);
   const ranked = [...list].sort((a,b)=>{ const sk=cfg.map(c=>c.k); return (b.scores[sk[1]]+b.scores[sk[2]])-(a.scores[sk[1]]+a.scores[sk[2]]); });
 
-  const upd = (id,field,val) => { const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,[field]:val}:i); sync({...db,[listKey]:nl}); };
-  const updMulti = (id,fields) => { const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,...fields}:i); sync({...db,[listKey]:nl}); };
+  const upd = (id, field, val) => {
+    const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,[field]:val}:i);
+    sync({...db,[listKey]:nl});
+  };
+  const updMulti = (id, fields) => {
+    const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,...fields}:i);
+    sync({...db,[listKey]:nl});
+  };
 
   const doAutoFill = async id => {
     const it=((db||{})[listKey]||[]).find(i=>i.id===id); if(!it) return;
@@ -544,11 +549,11 @@ export default function FiveAsideMasterApp() {
                 const img=new Image();
                 img.onload=()=>{
                   const canvas=document.createElement('canvas');
-                  const ratio=Math.min(800/img.width,800/img.height,1);
+                  const ratio=Math.min(400/img.width,400/img.height,1);
                   canvas.width=Math.round(img.width*ratio);
                   canvas.height=Math.round(img.height*ratio);
                   canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.75));
+                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.5));
                   setImgAdjusted(p=>({...p,[item.id]:false}));
                 };
                 img.src=rd.result;
