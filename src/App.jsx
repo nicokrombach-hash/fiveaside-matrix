@@ -258,13 +258,33 @@ export default function FiveAsideMasterApp() {
     return ()=>{ supabase.removeChannel(ch); clearTimeout(timeout); };
   }, []);
 
-  const sync = (newDb) => {
+  // Strip images for fast saves (sliders, text) — images saved separately
+  const stripImgs = arr => (arr||[]).map(({image,...rest})=>rest);
+
+  const saveImageToDb = async (newDb) => {
+    try {
+      ignoringRealtime.current = true;
+      await supabase.from('data_store').update({ content: newDb }).eq('id', rowId.current);
+      setTimeout(() => { ignoringRealtime.current = false; }, 3000);
+    } catch(e) { console.error('Image save error:', e); ignoringRealtime.current = false; }
+  };
+
+  const sync = (newDb, includeImages = false) => {
     setDb(newDb);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
         ignoringRealtime.current = true;
-        await supabase.from('data_store').update({ content: newDb }).eq('id', rowId.current);
+        // For text/slider changes: strip images to keep payload tiny
+        const payload = includeImages ? newDb : {
+          ...newDb,
+          athletes: stripImgs(newDb.athletes),
+          brands: stripImgs(newDb.brands),
+          rightsholder: stripImgs(newDb.rightsholder),
+          fiveaside_athletes: stripImgs(newDb.fiveaside_athletes),
+          fiveaside_brands: stripImgs(newDb.fiveaside_brands),
+        };
+        await supabase.from('data_store').update({ content: payload }).eq('id', rowId.current);
         setTimeout(() => { ignoringRealtime.current = false; }, 3000);
       } catch(e) {
         console.error('Save error:', e);
@@ -293,11 +313,13 @@ export default function FiveAsideMasterApp() {
 
   const upd = (id, field, val) => {
     const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,[field]:val}:i);
-    sync({...db,[listKey]:nl});
+    const newDb = {...db,[listKey]:nl};
+    // Images: save full payload. Text/scores: strip images for tiny payload
+    sync(newDb, field === 'image');
   };
   const updMulti = (id, fields) => {
     const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,...fields}:i);
-    sync({...db,[listKey]:nl});
+    sync({...db,[listKey]:nl}, 'image' in fields);
   };
 
   const doAutoFill = async id => {
@@ -380,10 +402,13 @@ export default function FiveAsideMasterApp() {
   );
   if (loadError||!db) return (
     <div style={{minHeight:'100vh',background:'#191919',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem'}}>
-      <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,color:'#ff3b3b',fontSize:'0.75rem',textTransform:'uppercase',letterSpacing:'0.3em'}}>Verbindungsfehler</p>
+      <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,color:'#ff3b3b',fontSize:'0.75rem',textTransform:'uppercase',letterSpacing:'0.3em'}}>Verbindungsfehler — Neu laden</p>
       <button onClick={()=>window.location.reload()} style={{background:'#D4AF37',border:'none',color:'#000',padding:'0.6rem 1.4rem',borderRadius:'0.6rem',fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontSize:'0.8rem',cursor:'pointer'}}>Neu laden</button>
     </div>
   );
+
+  // Realtime: reload images from DB after other users save with images
+  // (our sync strips images for speed, but when others save we get full data)
 
   const CSS = `
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,700;1,900&family=Barlow:wght@400;500;600;700&display=swap');
@@ -549,11 +574,11 @@ export default function FiveAsideMasterApp() {
                 const img=new Image();
                 img.onload=()=>{
                   const canvas=document.createElement('canvas');
-                  const ratio=Math.min(400/img.width,400/img.height,1);
+                  const ratio=Math.min(150/img.width,150/img.height,1);
                   canvas.width=Math.round(img.width*ratio);
                   canvas.height=Math.round(img.height*ratio);
                   canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.5));
+                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.25));
                   setImgAdjusted(p=>({...p,[item.id]:false}));
                 };
                 img.src=rd.result;
