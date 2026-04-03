@@ -378,6 +378,7 @@ export default function FiveAsideMasterApp() {
   const saveTimer = useRef(null);
 
   const ignoringRealtime = useRef(false);
+  const dbLoaded = useRef(false); // Guard: never save before DB is loaded
 
   useEffect(() => {
     let done = false;
@@ -391,6 +392,7 @@ export default function FiveAsideMasterApp() {
         if (data) {
           rowId.current = data.id;
           setDb({ athletes:[], brands:[], rightsholder:[], fiveaside_athletes:[], fiveaside_brands:[], ...data.content });
+          dbLoaded.current = true; // DB loaded — saves now allowed
         }
       } catch(e) {
         console.error('Supabase:', e);
@@ -428,9 +430,13 @@ export default function FiveAsideMasterApp() {
     setDb(newDb);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
+      // SAFETY: Never save if DB hasn't been loaded yet — prevents data loss
+      if (!dbLoaded.current || !rowId.current) {
+        console.warn('Save blocked: DB not yet loaded');
+        return;
+      }
       try {
         ignoringRealtime.current = true;
-        // For text/slider changes: strip images to keep payload tiny
         const payload = includeImages ? newDb : {
           ...newDb,
           athletes: stripImgs(newDb.athletes),
