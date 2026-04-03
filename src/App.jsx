@@ -1,3 +1,4 @@
+// @charset utf-8
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ChevronLeft, User, Plus, Trash2, Upload, Building2, Users, RefreshCw, Move, Instagram, ExternalLink, Loader, Zap, Search, Calendar, FileText, BarChart2 } from 'lucide-react';
@@ -11,15 +12,15 @@ const ATHLETE_CFG = [
   { k:'maturity',     l:'Marken-Reife',           s:'Leidenschaft / Innovation',      w:'20%', abbr:'MR' },
   { k:'storytelling', l:'Storytelling-Potenzial',  s:'Sexyness / Potential',           w:'25%', abbr:'ST' },
   { k:'leverage',     l:'Wirtschaftliche Hebel',   s:'Monetarisierung / Momentum',     w:'25%', abbr:'WH' },
-  { k:'efficiency',   l:'Operative Effizienz',     s:'Aufwand / Timing / Kapazit√§ten', w:'15%', abbr:'OE' },
-  { k:'network',      l:'Netzwerk-Kompatibilit√§t', s:'Network Fit / Menschen',         w:'15%', abbr:'NK' },
+  { k:'efficiency',   l:'Operative Effizienz',     s:'Aufwand / Timing / Kapazitäten', w:'15%', abbr:'OE' },
+  { k:'network',      l:'Netzwerk-Kompatibilität', s:'Network Fit / Menschen',         w:'15%', abbr:'NK' },
 ];
 const BRAND_CFG = [
-  { k:'passion',  l:'Passion / Innovation',   s:'Leidenschaft / Kreativit√§t', w:'20%', abbr:'PA' },
-  { k:'sexyness', l:'Sexyness / Potenzial',   s:'Marktattraktivit√§t',         w:'25%', abbr:'SE' },
+  { k:'passion',  l:'Passion / Innovation',   s:'Leidenschaft / Kreativität', w:'20%', abbr:'PA' },
+  { k:'sexyness', l:'Sexyness / Potenzial',   s:'Marktattraktivität',         w:'25%', abbr:'SE' },
   { k:'ip',       l:'IP / Momentum',          s:'Rechte / Timing',            w:'25%', abbr:'IP' },
-  { k:'aufwand',  l:'Aufwand / Timing',       s:'Ressourcen / Kapazit√§t',     w:'15%', abbr:'AU' },
-  { k:'network',  l:'Network Fit / Synergie', s:'Menschen / Kompatibilit√§t',  w:'15%', abbr:'NW' },
+  { k:'aufwand',  l:'Aufwand / Timing',       s:'Ressourcen / Kapazität',     w:'15%', abbr:'AU' },
+  { k:'network',  l:'Network Fit / Synergie', s:'Menschen / Kompatibilität',  w:'15%', abbr:'NW' },
 ];
 const RIGHTSHOLDER_CFG = BRAND_CFG.map(c=>({...c}));
 
@@ -33,9 +34,9 @@ const LEAD_STATUSES = [
 
 const QUADRANTS = [
   { id:'tl', label:'Entwicklungs-\nprojekte', sx:'23%', sy:'22%', strat:'Invest & Develop', desc:'Hoher Impact, geringere Synergie.' },
-  { id:'tr', label:'Anker-\nAthleten',        sx:'77%', sy:'22%', strat:'Joint Venture & Eigenmarken-Aufbau.', desc:'H√∂chste Priorit√§t. Maximales Marktpotenzial.' },
-  { id:'bl', label:'Kritische\nF√§lle',        sx:'23%', sy:'78%', strat:'Review & Decide', desc:'Kritisch √ºberpr√ºfen oder abgeben.' },
-  { id:'br', label:'Spezialisten',            sx:'77%', sy:'78%', strat:'Nischen-Strategie', desc:'Spezialisierte Verwertung m√∂glich.' },
+  { id:'tr', label:'Anker-\nAthleten',        sx:'77%', sy:'22%', strat:'Joint Venture & Eigenmarken-Aufbau.', desc:'Höchste Priorität. Maximales Marktpotenzial.' },
+  { id:'bl', label:'Kritische\nFälle',        sx:'23%', sy:'78%', strat:'Review & Decide', desc:'Kritisch überprüfen oder abgeben.' },
+  { id:'br', label:'Spezialisten',            sx:'77%', sy:'78%', strat:'Nischen-Strategie', desc:'Spezialisierte Verwertung möglich.' },
 ];
 
 function calcScores(scores, cfg) {
@@ -94,7 +95,7 @@ async function fetchAthleteAutofill(name) {
   const text = await claudeAPI(
     `Search Wikipedia, transfermarkt.de, sports news for athlete "${name}". `+
     `Return ONLY JSON: {"sport":"","league":"","alter":"","management":"","erfolge":"","leistungsdaten":"","instaHandle":"","imageUrl":""} `+
-    `erfolge: 3-5 achievements. leistungsdaten: German bullet points "‚Ä¢ stat\n‚Ä¢ stat". instaHandle: without @. imageUrl: .jpg/.png. alter: number. Unknown="".`
+    `erfolge: 3-5 achievements. leistungsdaten: German bullet points "• stat\n• stat". instaHandle: without @. imageUrl: .jpg/.png. alter: number. Unknown="".`
   );
   return parseJSON(text,'sport');
 }
@@ -103,18 +104,18 @@ async function fetchBrandAutofill(name, isBrand) {
   const text = await claudeAPI(
     `Search web for ${isBrand?'brand/company':'rights holder/sports association'} "${name}". `+
     `Return ONLY JSON: {"industry":"","focus":"","alter":"","management":"","erfolge":"","leistungsdaten":"","instaHandle":"","linkedinUrl":"","imageUrl":"","sponsoringBudget":"","zielgruppe":"","marketingZiele":"","engagements":"","inventar":"","reichweite":"","fanDemografie":"","werteFit":""} `+
-    `sponsoringBudget: e.g. "50.000‚Äì200.000 ‚Ç¨/Jahr". zielgruppe: e.g. "Gen Z, Millennials". `+
+    `sponsoringBudget: e.g. "50.000–200.000 €/Jahr". zielgruppe: e.g. "Gen Z, Millennials". `+
     `marketingZiele: e.g. "Awareness, Image". inventar: e.g. "Trikot, Social Media". reichweite: e.g. "120K IG, 2M TV". Unknown="".`
   );
   return parseJSON(text,'industry');
 }
 
 async function fetchLeistungsdaten(name, sport) {
-  const sites = sport?.toLowerCase().includes('fu√üball')?'transfermarkt.de und sofascore.com':
+  const sites = sport?.toLowerCase().includes('fußball')?'transfermarkt.de und sofascore.com':
     sport?.toLowerCase().includes('basketball')?'basketball-reference.com':'Google';
   const text = await claudeAPI(
     `Search ${sites} for 2024/2025 stats of "${name}" (${sport||'unknown'}). `+
-    `Return ONLY JSON: {"stats":"‚Ä¢ stat1\n‚Ä¢ stat2\n‚Ä¢ stat3"} with real numbers.`
+    `Return ONLY JSON: {"stats":"• stat1\n• stat2\n• stat3"} with real numbers.`
   );
   if (!text) return null;
   const m = text.match(/"stats"\s*:\s*"([^"]+)"/);
@@ -122,7 +123,7 @@ async function fetchLeistungsdaten(name, sport) {
   return parseJSON(text,'stats');
 }
 
-// ‚îÄ‚îÄ LEAD BADGE ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── LEAD BADGE ────────────────────────────────────────────────────────────────
 function LeadBadge({ status, onChange }) {
   const s = getLeadStatus(status);
   return (
@@ -133,12 +134,12 @@ function LeadBadge({ status, onChange }) {
           cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',letterSpacing:'0.08em',outline:'none'}}>
         {LEAD_STATUSES.map(ls=><option key={ls.value} value={ls.value}>{ls.label}</option>)}
       </select>
-      <span style={{position:'absolute',right:'0.45rem',top:'50%',transform:'translateY(-50%)',fontSize:'0.4rem',color:s.color,pointerEvents:'none'}}>‚ñº</span>
+      <span style={{position:'absolute',right:'0.45rem',top:'50%',transform:'translateY(-50%)',fontSize:'0.4rem',color:s.color,pointerEvents:'none'}}>▼</span>
     </div>
   );
 }
 
-// ‚îÄ‚îÄ INSTA CARD ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── INSTA CARD ────────────────────────────────────────────────────────────────
 function InstaCard({ item, upd }) {
   const [loading, setLoading] = useState(false);
   const timerRef = useRef(null);
@@ -167,9 +168,9 @@ function InstaCard({ item, upd }) {
           <Instagram size={10} color="#fff"/>
         </div>
         <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.6rem',fontWeight:900,color:'#fff',letterSpacing:'0.15em',textTransform:'uppercase'}}>Instagram</span>
-        {loading&&<span style={{marginLeft:'auto',fontSize:'0.42rem',color:'#E1306C',fontWeight:700,display:'flex',alignItems:'center',gap:'0.3rem'}}><Loader size={9} style={{animation:'spin 1s linear infinite'}}/>Sucht‚Ä¶</span>}
-        {!loading&&stats&&stats.followers!=='N/A'&&<span style={{marginLeft:'auto',fontSize:'0.4rem',color:'#2ecc71',fontWeight:700,textTransform:'uppercase'}}>‚óè Live</span>}
-        {!loading&&handle&&<button onClick={()=>doFetch(handle)} style={{marginLeft:(!stats||stats.followers==='N/A')?'auto':'0.4rem',background:'none',border:'none',cursor:'pointer',color:'#888',fontSize:'0.4rem',fontWeight:700,textTransform:'uppercase',fontFamily:"'Barlow',sans-serif",padding:0}}>‚Üª Update</button>}
+        {loading&&<span style={{marginLeft:'auto',fontSize:'0.42rem',color:'#E1306C',fontWeight:700,display:'flex',alignItems:'center',gap:'0.3rem'}}><Loader size={9} style={{animation:'spin 1s linear infinite'}}/>Sucht…</span>}
+        {!loading&&stats&&stats.followers!=='N/A'&&<span style={{marginLeft:'auto',fontSize:'0.4rem',color:'#2ecc71',fontWeight:700,textTransform:'uppercase'}}>● Live</span>}
+        {!loading&&handle&&<button onClick={()=>doFetch(handle)} style={{marginLeft:(!stats||stats.followers==='N/A')?'auto':'0.4rem',background:'none',border:'none',cursor:'pointer',color:'#888',fontSize:'0.4rem',fontWeight:700,textTransform:'uppercase',fontFamily:"'Barlow',sans-serif",padding:0}}>↻ Update</button>}
       </div>
       <div style={{padding:'0.55rem 1rem',borderBottom:stats?'1px solid rgba(255,255,255,0.05)':'none',display:'flex',alignItems:'center',gap:'0.5rem'}}>
         <span style={{color:'#E1306C',fontSize:'0.8rem',fontWeight:700,flexShrink:0}}>@</span>
@@ -185,7 +186,7 @@ function InstaCard({ item, upd }) {
                 <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.95rem',fontWeight:900,fontStyle:'italic',color:'#fff',lineHeight:1}}>{stats[s.k]}</div>
                 <div style={{fontSize:'0.42rem',color:'#666',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',margin:'0.12rem 0'}}>{s.l}</div>
                 <input style={{width:'100%',background:'transparent',border:'none',borderTop:'1px solid rgba(255,255,255,0.06)',outline:'none',fontSize:'0.58rem',color:'#aaa',fontFamily:"'Barlow',sans-serif",textAlign:'center',padding:'0.1rem 0'}}
-                  value={stats[s.k]||''} placeholder="bearbeiten‚Ä¶"
+                  value={stats[s.k]||''} placeholder="bearbeiten…"
                   onChange={e=>upd(item.id,'instaStats',{...stats,[s.k]:e.target.value})}/>
               </div>
             )}
@@ -195,14 +196,14 @@ function InstaCard({ item, upd }) {
       )}
       {stats&&stats.followers==='N/A'&&handle&&(
         <div style={{padding:'0.6rem 1rem',fontSize:'0.58rem',color:'#666',textAlign:'center'}}>
-          Keine Daten f√ºr @{handle}{socialBladeUrl&&<a href={socialBladeUrl} target="_blank" rel="noopener noreferrer" style={{color:'#D4AF37',textDecoration:'none',marginLeft:'0.4rem'}}>Social Blade ‚Üó</a>}
+          Keine Daten für @{handle}{socialBladeUrl&&<a href={socialBladeUrl} target="_blank" rel="noopener noreferrer" style={{color:'#D4AF37',textDecoration:'none',marginLeft:'0.4rem'}}>Social Blade ↗</a>}
         </div>
       )}
     </div>
   );
 }
 
-// ‚îÄ‚îÄ MAIN ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function FiveAsideMasterApp() {
   const [activeTab, setActiveTab] = useState('home');
   const [athleteSubTab, setAthleteSubTab] = useState('potenzial');
@@ -252,12 +253,48 @@ export default function FiveAsideMasterApp() {
     return ()=>{ supabase.removeChannel(ch); clearTimeout(timeout); };
   }, []);
 
-  const sync = newDb => {
+  const compressImage = (base64, maxW=600, quality=0.65) => new Promise(resolve => {
+    try {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ratio = Math.min(maxW / img.width, maxW / img.height, 1);
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(base64);
+      img.src = base64;
+    } catch(e) { resolve(base64); }
+  });
+
+  const sync = (newDb) => {
     setDb(newDb);
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(async()=>{
-      await supabase.from('data_store').update({content:newDb}).eq('id',rowId.current);
-    },800);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        // Compress images before saving to prevent Supabase size crashes
+        const compressList = async arr => {
+          if (!arr) return arr;
+          return Promise.all(arr.map(async i => {
+            if (i.image && i.image.length > 150000) {
+              return { ...i, image: await compressImage(i.image) };
+            }
+            return i;
+          }));
+        };
+        const safeDb = {
+          ...newDb,
+          athletes: await compressList(newDb.athletes),
+          brands: await compressList(newDb.brands),
+          rightsholder: await compressList(newDb.rightsholder),
+          fiveaside_athletes: await compressList(newDb.fiveaside_athletes),
+          fiveaside_brands: await compressList(newDb.fiveaside_brands),
+        };
+        await supabase.from('data_store').update({ content: safeDb }).eq('id', rowId.current);
+      } catch(e) { console.error('Save error:', e); }
+    }, 1000);
   };
 
   const getListKey = () => {
@@ -341,7 +378,7 @@ export default function FiveAsideMasterApp() {
 
   const del = (id,e) => {
     if(e)e.stopPropagation();
-    if(!window.confirm('Eintrag wirklich l√∂schen?'))return;
+    if(!window.confirm('Eintrag wirklich löschen?'))return;
     sync({...db,[listKey]:((db||{})[listKey]||[]).filter(i=>i.id!==id)});
     if(view==='detail')setView('grid');
   };
@@ -355,7 +392,7 @@ export default function FiveAsideMasterApp() {
   if (loading) return (
     <div style={{minHeight:'100vh',background:'#191919',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem'}}>
       <RefreshCw color="#D4AF37" size={36} style={{animation:'spin 1s linear infinite'}}/>
-      <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.4em',fontSize:'0.75rem',color:'#D4AF37'}}>Connecting‚Ä¶</p>
+      <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.4em',fontSize:'0.75rem',color:'#D4AF37'}}>Connecting…</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -513,7 +550,7 @@ export default function FiveAsideMasterApp() {
     return (
       <>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1.1rem'}}>
-          <button className="back-btn" style={{margin:0}} onClick={onBack}><ChevronLeft size={13}/> Zur√ºck</button>
+          <button className="back-btn" style={{margin:0}} onClick={onBack}><ChevronLeft size={13}/> Zurück</button>
           {isBrandOrRH&&<LeadBadge status={item.leadStatus} onChange={v=>upd(item.id,'leadStatus',v)}/>}
         </div>
         <div className="profile-row">
@@ -532,11 +569,11 @@ export default function FiveAsideMasterApp() {
           <div style={{flex:1}}>
             <input className="name-input" value={item.name} onChange={e=>upd(item.id,'name',e.target.value)}/>
             <button className="ai-fill-btn" onClick={()=>doAutoFill(item.id)} disabled={!!aiLoading[item.id]}>
-              {aiLoading[item.id]?<><Loader size={10} style={{animation:'spin 1s linear infinite'}}/> Sucht‚Ä¶</>:<><Search size={10}/> KI-Autofill alle Felder</>}
+              {aiLoading[item.id]?<><Loader size={10} style={{animation:'spin 1s linear infinite'}}/> Sucht…</>:<><Search size={10}/> KI-Autofill alle Felder</>}
             </button>
           </div>
         </div>
-        {aiLoading[item.id]&&<div className="ai-loading-bar"><Loader size={12} style={{animation:'spin 1s linear infinite',flexShrink:0}}/>KI sucht Daten f√ºr {item.name}‚Ä¶ ~15 Sek.</div>}
+        {aiLoading[item.id]&&<div className="ai-loading-bar"><Loader size={12} style={{animation:'spin 1s linear infinite',flexShrink:0}}/>KI sucht Daten für {item.name}… ~15 Sek.</div>}
         {item.aiImageUrl&&!item.image&&(
           <div className="ai-img-preview" style={{marginTop:'0.5rem'}}>
             <img src={item.aiImageUrl} className="ai-img-thumb" alt="" onError={e=>e.target.style.display='none'}/>
@@ -615,11 +652,13 @@ export default function FiveAsideMasterApp() {
   );
 
   const getGridTitle = () => {
-    if (activeTab==='athletes') {
-      if (athleteSubTab==='potenzial') return 'Potenzielle Athleten';
-      return fiveAsideSubTab==='brands'?'Five Aside ‚Äî Brands':'Five Aside ‚Äî Athleten';
+    if (activeTab === 'athletes') {
+      if (athleteSubTab === 'potenzial') return 'Potenzielle Athleten';
+      if (fiveAsideSubTab === 'brands') return 'Five Aside Athleten - Brands';
+      return 'Five Aside Athleten';
     }
-    return brandSubTab==='rightsholder'?'Rightsholder':'Brands';
+    if (brandSubTab === 'rightsholder') return 'Rightsholder';
+    return 'Brands';
   };
 
   return (
@@ -687,9 +726,9 @@ export default function FiveAsideMasterApp() {
             <div className="quick-add-row">
               <input className="quick-input" value={quickName} onChange={e=>setQuickName(e.target.value)}
                 onKeyDown={e=>e.key==='Enter'&&!quickLoading&&quickName.trim()&&addFromName()}
-                placeholder={isBrandOrRH?'Brand/Rightsholder-Name ‚Üí KI f√ºllt alle Felder‚Ä¶':'Athleten-Name ‚Üí KI f√ºllt alle Felder automatisch‚Ä¶'}/>
+                placeholder={isBrandOrRH?'Brand/Rightsholder-Name - KI füllt alle Felder…':'Athleten-Name - KI füllt alle Felder automatisch…'}/>
               <button className="btn-ai" onClick={addFromName} disabled={quickLoading||!quickName.trim()}>
-                {quickLoading?<><Loader size={13} style={{animation:'spin 1s linear infinite'}}/> Erstellt‚Ä¶</>:<><Zap size={13}/> KI-Schnellerstellung</>}
+                {quickLoading?<><Loader size={13} style={{animation:'spin 1s linear infinite'}}/> Erstellt…</>:<><Zap size={13}/> KI-Schnellerstellung</>}
               </button>
             </div>
             <div className="cards-grid">
@@ -709,10 +748,10 @@ export default function FiveAsideMasterApp() {
                        isBrandOrRH?<Building2 size={46} color="#333"/>:<User size={46} color="#333"/>}
                     </div>
                     <div className="card-name">{it.name}</div>
-                    <div className="card-sub">{isBrandOrRH?`${it.industry||''}${it.focus?' ¬∑ '+it.focus:''}`:`${it.sport||''}${it.league?' ¬∑ '+it.league:''}`}</div>
+                    <div className="card-sub">{isBrandOrRH?`${it.industry||''}${it.focus?' · '+it.focus:''}`:`${it.sport||''}${it.league?' · '+it.league:''}`}</div>
                     <div className="card-footer">
                       <span style={{fontSize:'0.46rem',color:'#555',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.1em'}}>Score {calcScores(it.scores,cfg).total.toFixed(1)}</span>
-                      <button className="card-delete-btn" onClick={e=>del(it.id,e)}><Trash2 size={10}/> L√∂schen</button>
+                      <button className="card-delete-btn" onClick={e=>del(it.id,e)}><Trash2 size={10}/> Löschen</button>
                     </div>
                   </div>
                 );
@@ -721,7 +760,7 @@ export default function FiveAsideMasterApp() {
           </>
         )}
 
-        {/* DETAIL ‚Äî Brand / Rightsholder */}
+        {/* DETAIL — Brand / Rightsholder */}
         {activeTab!=='home'&&view==='detail'&&item&&isBrandOrRH&&(
           <div className="detail-wrap">
             <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
@@ -729,54 +768,54 @@ export default function FiveAsideMasterApp() {
                 <DetailHeader onBack={()=>setView('grid')}/>
                 <div className="meta-grid" style={{marginTop:'0.7rem'}}>
                   <MF label="Branche / Kategorie" field="industry"/>
-                  <MF label="Gr√ºndungsjahr" field="alter" placeholder="z.B. 2005"/>
+                  <MF label="Gründungsjahr" field="alter" placeholder="z.B. 2005"/>
                   <MF label="Fokus / Segment" field="focus"/>
                   <MF label="Ansprechpartner / CEO" field="management"/>
                   {/* LinkedIn */}
                   <div className="meta-field meta-full">
-                    <div className="meta-label">üîó LinkedIn URL</div>
+                    <div className="meta-label">🔗 LinkedIn URL</div>
                     <div style={{display:'flex',gap:'0.4rem',alignItems:'center'}}>
-                      <input className="meta-input" style={{flex:1}} value={item.linkedinUrl||''} placeholder="https://linkedin.com/company/‚Ä¶"
+                      <input className="meta-input" style={{flex:1}} value={item.linkedinUrl||''} placeholder="https://linkedin.com/company/…"
                         onChange={e=>upd(item.id,'linkedinUrl',e.target.value)}/>
-                      {item.linkedinUrl&&<a href={item.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{background:'#0077b5',color:'#fff',textDecoration:'none',padding:'0.3rem 0.6rem',borderRadius:'0.4rem',fontSize:'0.5rem',fontWeight:700,whiteSpace:'nowrap',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',display:'flex',alignItems:'center',gap:'0.2rem'}}>√ñffnen <ExternalLink size={8}/></a>}
+                      {item.linkedinUrl&&<a href={item.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{background:'#0077b5',color:'#fff',textDecoration:'none',padding:'0.3rem 0.6rem',borderRadius:'0.4rem',fontSize:'0.5rem',fontWeight:700,whiteSpace:'nowrap',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',display:'flex',alignItems:'center',gap:'0.2rem'}}>Öffnen <ExternalLink size={8}/></a>}
                     </div>
                   </div>
                   <hr className="section-divider"/>
                   {/* Brand-specific */}
                   {isBrandCtx&&<>
-                    <MF label="üí∞ Sponsoring-Budget" field="sponsoringBudget" placeholder="z.B. 50.000‚Äì200.000 ‚Ç¨/Jahr"/>
-                    <MF label="üéØ Zielgruppe" field="zielgruppe" placeholder="z.B. Gen Z, B2B, Millennials"/>
-                    <MF label="üì£ Marketing-Ziele" field="marketingZiele" full area placeholder="z.B. Awareness, Leads, Image-St√§rkung‚Ä¶"/>
-                    <MF label="ü§ù Bestehende Engagements" field="engagements" full area placeholder="Aktuelle Sponsorings und Partnerschaften‚Ä¶"/>
+                    <MF label="💰 Sponsoring-Budget" field="sponsoringBudget" placeholder="z.B. 50.000–200.000 €/Jahr"/>
+                    <MF label="🎯 Zielgruppe" field="zielgruppe" placeholder="z.B. Gen Z, B2B, Millennials"/>
+                    <MF label="📣 Marketing-Ziele" field="marketingZiele" full area placeholder="z.B. Awareness, Leads, Image-Stärkung…"/>
+                    <MF label="🤝 Bestehende Engagements" field="engagements" full area placeholder="Aktuelle Sponsorings und Partnerschaften…"/>
                   </>}
                   {/* Rightsholder-specific */}
                   {isRHCtx&&<>
-                    <MF label="üì¶ Inventar" field="inventar" placeholder="z.B. Trikot, Social Media, Events"/>
-                    <MF label="üì° Reichweite" field="reichweite" placeholder="z.B. 120K IG, 2M TV"/>
-                    <MF label="üë• Fan-Demografie" field="fanDemografie" full area placeholder="z.B. 18‚Äì35, m√§nnlich, DACH-Raum‚Ä¶"/>
-                    <MF label="üí° Werte-Fit" field="werteFit" full area placeholder="Gemeinsame Werte, Positionierung‚Ä¶"/>
+                    <MF label="📦 Inventar" field="inventar" placeholder="z.B. Trikot, Social Media, Events"/>
+                    <MF label="📡 Reichweite" field="reichweite" placeholder="z.B. 120K IG, 2M TV"/>
+                    <MF label="👥 Fan-Demografie" field="fanDemografie" full area placeholder="z.B. 18–35, männlich, DACH-Raum…"/>
+                    <MF label="💡 Werte-Fit" field="werteFit" full area placeholder="Gemeinsame Werte, Positionierung…"/>
                   </>}
                   <hr className="section-divider"/>
-                  <MF label="Erfolge / Referenzen" field="erfolge" full area placeholder="Wichtige Meilensteine, Awards, Cases‚Ä¶"/>
+                  <MF label="Erfolge / Referenzen" field="erfolge" full area placeholder="Wichtige Meilensteine, Awards, Cases…"/>
                   <div className="leistung-box">
                     <div className="leistung-header">
                       <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><BarChart2 size={9} color="#D4AF37"/> Kennzahlen</div>
                       <button className="leistung-refresh" onClick={()=>refreshLeistung(item.id)} disabled={!!leistungLoading[item.id]}>
-                        {leistungLoading[item.id]?<><Loader size={8} style={{animation:'spin 1s linear infinite'}}/> L√§dt‚Ä¶</>:<><RefreshCw size={8}/> KI-Update</>}
+                        {leistungLoading[item.id]?<><Loader size={8} style={{animation:'spin 1s linear infinite'}}/> Lädt…</>:<><RefreshCw size={8}/> KI-Update</>}
                       </button>
                     </div>
                     {item.leistungsdaten
                       ?<textarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.7rem',color:'#ccc',lineHeight:1.8,resize:'vertical',fontFamily:"'Barlow',sans-serif",minHeight:'55px',padding:0}} value={item.leistungsdaten} onChange={e=>upd(item.id,'leistungsdaten',e.target.value)}/>
-                      :<div className="leistung-empty">‚ÄûKI-Update" f√ºr aktuelle Kennzahlen</div>
+                      :<div className="leistung-empty">„KI-Update" für aktuelle Kennzahlen</div>
                     }
                   </div>
-                  <MF label={<><Calendar size={9} style={{marginRight:'0.2rem'}}/>Key Events / Timeline</>} field="keyEvents" full area placeholder="Wichtige Termine, Saisonstart, Deadlines‚Ä¶"/>
-                  <MF label={<><FileText size={9} style={{marginRight:'0.2rem'}}/>Notizen</>} field="notizen" full area placeholder="Interne Notizen, n√§chste Schritte, Anmerkungen‚Ä¶"/>
+                  <MF label={<><Calendar size={9} style={{marginRight:'0.2rem'}}/>Key Events / Timeline</>} field="keyEvents" full area placeholder="Wichtige Termine, Saisonstart, Deadlines…"/>
+                  <MF label={<><FileText size={9} style={{marginRight:'0.2rem'}}/>Notizen</>} field="notizen" full area placeholder="Interne Notizen, nächste Schritte, Anmerkungen…"/>
                   {item.image&&!imgAdjusted[item.id]&&(
                     <div className="img-pos-wrap">
                       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                         <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Move size={9} color="#888"/> Bildausschnitt</div>
-                        <button onClick={()=>setImgAdjusted(p=>({...p,[item.id]:true}))} style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.3)',borderRadius:'0.35rem',padding:'0.18rem 0.6rem',fontSize:'0.5rem',fontWeight:700,color:'#D4AF37',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>‚úì Fertig</button>
+                        <button onClick={()=>setImgAdjusted(p=>({...p,[item.id]:true}))} style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.3)',borderRadius:'0.35rem',padding:'0.18rem 0.6rem',fontSize:'0.5rem',fontWeight:700,color:'#D4AF37',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>✓ Fertig</button>
                       </div>
                       <div className="img-preview-box"><img src={item.image} alt="preview" style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/></div>
                       <div className="img-pos-controls">
@@ -793,7 +832,7 @@ export default function FiveAsideMasterApp() {
           </div>
         )}
 
-        {/* DETAIL ‚Äî Athlete */}
+        {/* DETAIL — Athlete */}
         {activeTab!=='home'&&view==='detail'&&item&&!isBrandOrRH&&(
           <div className="detail-wrap">
             <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
@@ -804,24 +843,24 @@ export default function FiveAsideMasterApp() {
                   <div className="meta-field"><div className="meta-label">Alter</div><input className="meta-input" value={item.alter||''} onChange={e=>upd(item.id,'alter',e.target.value)}/></div>
                   <div className="meta-field"><div className="meta-label">Verein / Team</div><input className="meta-input" value={item.league||''} onChange={e=>upd(item.id,'league',e.target.value)}/></div>
                   <div className="meta-field"><div className="meta-label">Management</div><input className="meta-input" value={item.management||''} onChange={e=>upd(item.id,'management',e.target.value)}/></div>
-                  <div className="meta-field meta-full"><div className="meta-label">Erfolge</div><textarea className="meta-textarea" value={item.erfolge||''} onChange={e=>upd(item.id,'erfolge',e.target.value)} placeholder="Titel, Auszeichnungen‚Ä¶"/></div>
+                  <div className="meta-field meta-full"><div className="meta-label">Erfolge</div><textarea className="meta-textarea" value={item.erfolge||''} onChange={e=>upd(item.id,'erfolge',e.target.value)} placeholder="Titel, Auszeichnungen…"/></div>
                   <div className="leistung-box">
                     <div className="leistung-header">
                       <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Zap size={9} color="#D4AF37"/> Leistungsdaten</div>
                       <button className="leistung-refresh" onClick={()=>refreshLeistung(item.id)} disabled={!!leistungLoading[item.id]}>
-                        {leistungLoading[item.id]?<><Loader size={8} style={{animation:'spin 1s linear infinite'}}/> L√§dt‚Ä¶</>:<><RefreshCw size={8}/> KI-Update</>}
+                        {leistungLoading[item.id]?<><Loader size={8} style={{animation:'spin 1s linear infinite'}}/> Lädt…</>:<><RefreshCw size={8}/> KI-Update</>}
                       </button>
                     </div>
                     {item.leistungsdaten
                       ?<textarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.7rem',color:'#ccc',lineHeight:1.8,resize:'vertical',fontFamily:"'Barlow',sans-serif",minHeight:'55px',padding:0}} value={item.leistungsdaten} onChange={e=>upd(item.id,'leistungsdaten',e.target.value)}/>
-                      :<div className="leistung-empty">‚ÄûKI-Update" f√ºr aktuelle Statistiken</div>
+                      :<div className="leistung-empty">„KI-Update" für aktuelle Statistiken</div>
                     }
                   </div>
                   {item.image&&!imgAdjusted[item.id]&&(
                     <div className="img-pos-wrap">
                       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                         <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Move size={9} color="#888"/> Bildausschnitt</div>
-                        <button onClick={()=>setImgAdjusted(p=>({...p,[item.id]:true}))} style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.3)',borderRadius:'0.35rem',padding:'0.18rem 0.6rem',fontSize:'0.5rem',fontWeight:700,color:'#D4AF37',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>‚úì Fertig</button>
+                        <button onClick={()=>setImgAdjusted(p=>({...p,[item.id]:true}))} style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.3)',borderRadius:'0.35rem',padding:'0.18rem 0.6rem',fontSize:'0.5rem',fontWeight:700,color:'#D4AF37',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>✓ Fertig</button>
                       </div>
                       <div className="img-preview-box"><img src={item.image} alt="preview" style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/></div>
                       <div className="img-pos-controls">
@@ -846,5 +885,3 @@ export default function FiveAsideMasterApp() {
     </div>
   );
 }
-
-
