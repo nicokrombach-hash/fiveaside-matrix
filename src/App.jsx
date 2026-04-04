@@ -357,6 +357,32 @@ function BrandDealsSection({ item, upd }) {
 }
 
 
+// ── LOCAL INPUT (prevents focus loss on every keystroke) ────────────────────
+function LocalInput({ value, onChange, className, style, placeholder, type='text' }) {
+  const [local, setLocal] = React.useState(value||'');
+  React.useEffect(() => { setLocal(value||''); }, [value]);
+  return (
+    <input type={type} className={className} style={style} placeholder={placeholder}
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={e => { if (e.target.value !== (value||'')) onChange(e); }}
+      onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+    />
+  );
+}
+
+function LocalTextarea({ value, onChange, className, style, placeholder }) {
+  const [local, setLocal] = React.useState(value||'');
+  React.useEffect(() => { setLocal(value||''); }, [value]);
+  return (
+    <textarea className={className} style={style} placeholder={placeholder}
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={e => { if (e.target.value !== (value||'')) onChange(e); }}
+    />
+  );
+}
+
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function FiveAsideMasterApp() {
   const [activeTab, setActiveTab] = useState('home');
@@ -749,7 +775,7 @@ export default function FiveAsideMasterApp() {
             <div className="avatar-overlay" onClick={()=>fileInputRef.current.click()}><Upload size={16} color="#fff"/></div>
           </div>
           <div style={{flex:1}}>
-            <input className="name-input" value={item.name} onChange={e=>upd(item.id,'name',e.target.value)}/>
+            <LocalInput className="name-input" value={item.name} onChange={e=>upd(item.id,'name',e.target.value)}/>
             <button className="ai-fill-btn" onClick={()=>doAutoFill(item.id)} disabled={!!aiLoading[item.id]}>
               {aiLoading[item.id]?<><Loader size={10} style={{animation:'spin 1s linear infinite'}}/> Sucht…</>:<><Search size={10}/> KI-Autofill alle Felder</>}
             </button>
@@ -828,8 +854,8 @@ export default function FiveAsideMasterApp() {
   const MF = ({label, field, full, area, placeholder, icon}) => (
     <div className={'meta-field'+(full?' meta-full':'')}>
       <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.28rem'}}>{icon&&icon}{label}</div>
-      {area?<textarea className="meta-textarea" value={item[field]||''} placeholder={placeholder||''} onChange={e=>upd(item.id,field,e.target.value)}/>
-           :<input className="meta-input" value={item[field]||''} placeholder={placeholder||''} onChange={e=>upd(item.id,field,e.target.value)}/>}
+      {area?<LocalTextarea className="meta-textarea" value={item[field]||''} placeholder={placeholder||''} onChange={e=>upd(item.id,field,e.target.value)}/>
+           :<LocalInput className="meta-input" value={item[field]||''} placeholder={placeholder||''} onChange={e=>upd(item.id,field,e.target.value)}/>}
     </div>
   );
 
@@ -957,7 +983,7 @@ export default function FiveAsideMasterApp() {
                   <div className="meta-field meta-full">
                     <div className="meta-label">🔗 LinkedIn URL</div>
                     <div style={{display:'flex',gap:'0.4rem',alignItems:'center'}}>
-                      <input className="meta-input" style={{flex:1}} value={item.linkedinUrl||''} placeholder="https://linkedin.com/company/…"
+                      <LocalInput className="meta-input" style={{flex:1}} value={item.linkedinUrl||''} placeholder="https://linkedin.com/company/…"
                         onChange={e=>upd(item.id,'linkedinUrl',e.target.value)}/>
                       {item.linkedinUrl&&<a href={item.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{background:'#0077b5',color:'#fff',textDecoration:'none',padding:'0.3rem 0.6rem',borderRadius:'0.4rem',fontSize:'0.5rem',fontWeight:700,whiteSpace:'nowrap',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',display:'flex',alignItems:'center',gap:'0.2rem'}}>Öffnen <ExternalLink size={8}/></a>}
                     </div>
@@ -987,7 +1013,7 @@ export default function FiveAsideMasterApp() {
                       </button>
                     </div>
                     {item.leistungsdaten
-                      ?<textarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.7rem',color:'#ccc',lineHeight:1.8,resize:'vertical',fontFamily:"'Barlow',sans-serif",minHeight:'55px',padding:0}} value={item.leistungsdaten} onChange={e=>upd(item.id,'leistungsdaten',e.target.value)}/>
+                      ?<LocalTextarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.7rem',color:'#ccc',lineHeight:1.8,resize:'vertical',fontFamily:"'Barlow',sans-serif",minHeight:'55px',padding:0}} value={item.leistungsdaten} onChange={e=>upd(item.id,'leistungsdaten',e.target.value)}/>
                       :<div className="leistung-empty">„KI-Update" für aktuelle Kennzahlen</div>
                     }
                   </div>
@@ -1021,11 +1047,11 @@ export default function FiveAsideMasterApp() {
               <div className="panel">
                 <DetailHeader onBack={()=>setView('grid')}/>
                 <div className="meta-grid" style={{marginTop:'0.7rem'}}>
-                  <div className="meta-field"><div className="meta-label">Sportart</div><input className="meta-input" value={item.sport||''} onChange={e=>upd(item.id,'sport',e.target.value)}/></div>
-                  <div className="meta-field"><div className="meta-label">Alter</div><input className="meta-input" value={item.alter||''} onChange={e=>upd(item.id,'alter',e.target.value)}/></div>
-                  <div className="meta-field"><div className="meta-label">Verein / Team</div><input className="meta-input" value={item.league||''} onChange={e=>upd(item.id,'league',e.target.value)}/></div>
-                  <div className="meta-field"><div className="meta-label">Management</div><input className="meta-input" value={item.management||''} onChange={e=>upd(item.id,'management',e.target.value)}/></div>
-                  <div className="meta-field meta-full"><div className="meta-label">Erfolge</div><textarea className="meta-textarea" value={item.erfolge||''} onChange={e=>upd(item.id,'erfolge',e.target.value)} placeholder="Titel, Auszeichnungen…"/></div>
+                  <div className="meta-field"><div className="meta-label">Sportart</div><LocalInput className="meta-input" value={item.sport||''} onChange={e=>upd(item.id,'sport',e.target.value)}/></div>
+                  <div className="meta-field"><div className="meta-label">Alter</div><LocalInput className="meta-input" value={item.alter||''} onChange={e=>upd(item.id,'alter',e.target.value)}/></div>
+                  <div className="meta-field"><div className="meta-label">Verein / Team</div><LocalInput className="meta-input" value={item.league||''} onChange={e=>upd(item.id,'league',e.target.value)}/></div>
+                  <div className="meta-field"><div className="meta-label">Management</div><LocalInput className="meta-input" value={item.management||''} onChange={e=>upd(item.id,'management',e.target.value)}/></div>
+                  <div className="meta-field meta-full"><div className="meta-label">Erfolge</div><LocalTextarea className="meta-textarea" value={item.erfolge||''} onChange={e=>upd(item.id,'erfolge',e.target.value)} placeholder="Titel, Auszeichnungen…"/></div>
                   <div className="leistung-box">
                     <div className="leistung-header">
                       <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Zap size={9} color="#D4AF37"/> Leistungsdaten</div>
@@ -1034,7 +1060,7 @@ export default function FiveAsideMasterApp() {
                       </button>
                     </div>
                     {item.leistungsdaten
-                      ?<textarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.7rem',color:'#ccc',lineHeight:1.8,resize:'vertical',fontFamily:"'Barlow',sans-serif",minHeight:'55px',padding:0}} value={item.leistungsdaten} onChange={e=>upd(item.id,'leistungsdaten',e.target.value)}/>
+                      ?<LocalTextarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.7rem',color:'#ccc',lineHeight:1.8,resize:'vertical',fontFamily:"'Barlow',sans-serif",minHeight:'55px',padding:0}} value={item.leistungsdaten} onChange={e=>upd(item.id,'leistungsdaten',e.target.value)}/>
                       :<div className="leistung-empty">„KI-Update" für aktuelle Statistiken</div>
                     }
                   </div>
