@@ -473,45 +473,42 @@ export default function FiveAsideMasterApp() {
     } catch(e) { resolve(b64); }
   });
 
+  // Always keep a ref to latest db state — prevents stale closure bug
+  const dbRef = useRef(null);
+
   const sync = (newDb) => {
+    dbRef.current = newDb; // Always update ref with latest state
     setDb(newDb);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      if (!dbLoaded.current || !rowId.current) {
-        console.warn('Save blocked: DB not yet loaded');
-        return;
-      }
+      if (!dbLoaded.current || !rowId.current) return;
+      // Use dbRef.current — the LATEST state, not stale closure
+      const latest = dbRef.current;
       try {
         ignoringRealtime.current = true;
-        // Compress all images before saving — always include them, never strip
         const compressList = async arr => {
           if (!arr) return [];
           return Promise.all(arr.map(async item => {
-            if (!item.image) return item;
-            // Only compress if larger than ~20KB to avoid double-compression
-            if (item.image.length > 20000) {
-              return {...item, image: await compressForSave(item.image)};
-            }
-            return item;
+            if (!item.image || item.image.length <= 20000) return item;
+            return {...item, image: await compressForSave(item.image)};
           }));
         };
         const safeDb = {
-          ...newDb,
-          athletes:            await compressList(newDb.athletes),
-          brands:              await compressList(newDb.brands),
-          rightsholder:        await compressList(newDb.rightsholder),
-          fiveaside_athletes:  await compressList(newDb.fiveaside_athletes),
-          fiveaside_brands:    await compressList(newDb.fiveaside_brands),
+          ...latest,
+          athletes:            await compressList(latest.athletes),
+          brands:              await compressList(latest.brands),
+          rightsholder:        await compressList(latest.rightsholder),
+          fiveaside_athletes:  await compressList(latest.fiveaside_athletes),
+          fiveaside_brands:    await compressList(latest.fiveaside_brands),
         };
         await supabase.from('data_store').update({ content: safeDb }).eq('id', rowId.current);
-        // Update local state with compressed images so UI stays consistent
-        setDb(safeDb);
-        setTimeout(() => { ignoringRealtime.current = false; }, 3000);
+        // IMPORTANT: Do NOT call setDb here — never overwrite latest local state
+        setTimeout(() => { ignoringRealtime.current = false; }, 4000);
       } catch(e) {
         console.error('Save error:', e);
         ignoringRealtime.current = false;
       }
-    }, 800);
+    }, 1200);
   };
 
   const getListKey = () => {
