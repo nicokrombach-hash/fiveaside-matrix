@@ -433,45 +433,79 @@ export default function FiveAsideMasterApp() {
     const ch = supabase.channel('db-changes')
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'data_store'},
         p => {
-          // Ignore realtime updates right after we saved — prevents slider reset bug
           if (ignoringRealtime.current) return;
-          setDb({athletes:[],brands:[],rightsholder:[],fiveaside_athletes:[],fiveaside_brands:[],...p.new.content});
+          // Merge incoming data with current images — never lose images on realtime update
+          setDb(current => {
+            const incoming = {athletes:[],brands:[],rightsholder:[],fiveaside_athletes:[],fiveaside_brands:[],...p.new.content};
+            const mergeImgs = (newArr, oldArr) => (newArr||[]).map(item => {
+              const old = (oldArr||[]).find(o=>o.id===item.id);
+              return old?.image && !item.image ? {...item, image:old.image} : item;
+            });
+            return {
+              ...incoming,
+              athletes:           mergeImgs(incoming.athletes,           current?.athletes),
+              brands:             mergeImgs(incoming.brands,             current?.brands),
+              rightsholder:       mergeImgs(incoming.rightsholder,       current?.rightsholder),
+              fiveaside_athletes: mergeImgs(incoming.fiveaside_athletes, current?.fiveaside_athletes),
+              fiveaside_brands:   mergeImgs(incoming.fiveaside_brands,   current?.fiveaside_brands),
+            };
+          });
         })
       .subscribe();
     return ()=>{ supabase.removeChannel(ch); clearTimeout(timeout); };
   }, []);
 
-  // Strip images for fast saves (sliders, text) — images saved separately
-  const stripImgs = arr => (arr||[]).map(({image,...rest})=>rest);
-
-  const saveImageToDb = async (newDb) => {
+  // Compress image to safe size for Supabase (~15KB)
+  const compressForSave = (b64) => new Promise(resolve => {
+    if (!b64) return resolve(null);
     try {
-      ignoringRealtime.current = true;
-      await supabase.from('data_store').update({ content: newDb }).eq('id', rowId.current);
-      setTimeout(() => { ignoringRealtime.current = false; }, 3000);
-    } catch(e) { console.error('Image save error:', e); ignoringRealtime.current = false; }
-  };
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const r = Math.min(250/img.width, 250/img.height, 1);
+        canvas.width = Math.round(img.width*r);
+        canvas.height = Math.round(img.height*r);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.5));
+      };
+      img.onerror = () => resolve(b64);
+      img.src = b64;
+    } catch(e) { resolve(b64); }
+  });
 
-  const sync = (newDb, includeImages = false) => {
+  const sync = (newDb) => {
     setDb(newDb);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      // SAFETY: Never save if DB hasn't been loaded yet — prevents data loss
       if (!dbLoaded.current || !rowId.current) {
         console.warn('Save blocked: DB not yet loaded');
         return;
       }
       try {
         ignoringRealtime.current = true;
-        const payload = includeImages ? newDb : {
-          ...newDb,
-          athletes: stripImgs(newDb.athletes),
-          brands: stripImgs(newDb.brands),
-          rightsholder: stripImgs(newDb.rightsholder),
-          fiveaside_athletes: stripImgs(newDb.fiveaside_athletes),
-          fiveaside_brands: stripImgs(newDb.fiveaside_brands),
+        // Compress all images before saving — always include them, never strip
+        const compressList = async arr => {
+          if (!arr) return [];
+          return Promise.all(arr.map(async item => {
+            if (!item.image) return item;
+            // Only compress if larger than ~20KB to avoid double-compression
+            if (item.image.length > 20000) {
+              return {...item, image: await compressForSave(item.image)};
+            }
+            return item;
+          }));
         };
-        await supabase.from('data_store').update({ content: payload }).eq('id', rowId.current);
+        const safeDb = {
+          ...newDb,
+          athletes:            await compressList(newDb.athletes),
+          brands:              await compressList(newDb.brands),
+          rightsholder:        await compressList(newDb.rightsholder),
+          fiveaside_athletes:  await compressList(newDb.fiveaside_athletes),
+          fiveaside_brands:    await compressList(newDb.fiveaside_brands),
+        };
+        await supabase.from('data_store').update({ content: safeDb }).eq('id', rowId.current);
+        // Update local state with compressed images so UI stays consistent
+        setDb(safeDb);
         setTimeout(() => { ignoringRealtime.current = false; }, 3000);
       } catch(e) {
         console.error('Save error:', e);
@@ -500,13 +534,11 @@ export default function FiveAsideMasterApp() {
 
   const upd = (id, field, val) => {
     const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,[field]:val}:i);
-    const newDb = {...db,[listKey]:nl};
-    // Images: save full payload. Text/scores: strip images for tiny payload
-    sync(newDb, field === 'image');
+    sync({...db,[listKey]:nl});
   };
   const updMulti = (id, fields) => {
     const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,...fields}:i);
-    sync({...db,[listKey]:nl}, 'image' in fields);
+    sync({...db,[listKey]:nl});
   };
 
   const doAutoFill = async id => {
