@@ -573,7 +573,7 @@ export default function FiveAsideMasterApp() {
   };
 
   const mkNew = () => {
-    const base={id:Date.now(),name:'Neuer Eintrag',image:null,imgX:50,imgY:50,alter:'',erfolge:'',management:'',leistungsdaten:'',instaHandle:'',instaStats:null,aiImageUrl:'',brandDeals:[],scores:newScores(cfg)};
+    const base={id:Date.now(),name:'Neuer Eintrag',image:null,imgX:50,imgY:50,alter:'',erfolge:'',management:'',leistungsdaten:'',instaHandle:'',instaStats:null,aiImageUrl:'',brandDeals:[],notizen:'',proKontra:{pro:'',kontra:''},scores:newScores(cfg)};
     if(isBrandOrRH){return{...base,industry:'',focus:'',leadStatus:'neu',linkedinUrl:'',keyEvents:'',notizen:'',sponsoringBudget:'',zielgruppe:'',marketingZiele:'',engagements:'',inventar:'',reichweite:'',fanDemografie:'',werteFit:''};}
     return{...base,sport:'',league:'',spielklasse:''};
   };
@@ -1081,6 +1081,23 @@ export default function FiveAsideMasterApp() {
                   <div className="meta-field"><div className="meta-label">Verein / Team</div><LocalInput className="meta-input" value={item.league||''} onChange={e=>upd(item.id,'league',e.target.value)}/></div>
                   <div className="meta-field"><div className="meta-label">Management</div><LocalInput className="meta-input" value={item.management||''} onChange={e=>upd(item.id,'management',e.target.value)}/></div>
                   <div className="meta-field meta-full"><div className="meta-label">Erfolge</div><LocalTextarea className="meta-textarea" value={item.erfolge||''} onChange={e=>upd(item.id,'erfolge',e.target.value)} placeholder="Titel, Auszeichnungen…"/></div>
+                  <div className="meta-field meta-full">
+                    <div className="meta-label" style={{marginBottom:'0.4rem'}}>Pro / Kontra</div>
+                    <div style={{border:'1px solid rgba(255,255,255,0.1)',borderRadius:'0.6rem',overflow:'hidden',background:'rgba(0,0,0,0.3)'}}>
+                      <div style={{padding:'0.5rem 0.7rem',borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
+                        <div style={{fontSize:'0.48rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.2em',color:'#22c55e',marginBottom:'0.3rem'}}>✓ Pro</div>
+                        <LocalTextarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.76rem',color:'#fff',fontFamily:"'Barlow',sans-serif",resize:'vertical',minHeight:'70px',lineHeight:1.6,padding:0}} value={(item.proKontra&&item.proKontra.pro)||''} placeholder="Stärken, Vorteile…" onChange={e=>upd(item.id,'proKontra',{pro:e.target.value,kontra:(item.proKontra&&item.proKontra.kontra)||''})}/>
+                      </div>
+                      <div style={{padding:'0.5rem 0.7rem'}}>
+                        <div style={{fontSize:'0.48rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.2em',color:'#ef4444',marginBottom:'0.3rem'}}>✗ Kontra</div>
+                        <LocalTextarea style={{width:'100%',background:'transparent',border:'none',outline:'none',fontSize:'0.76rem',color:'#fff',fontFamily:"'Barlow',sans-serif",resize:'vertical',minHeight:'70px',lineHeight:1.6,padding:0}} value={(item.proKontra&&item.proKontra.kontra)||''} placeholder="Risiken, Schwächen…" onChange={e=>upd(item.id,'proKontra',{kontra:e.target.value,pro:(item.proKontra&&item.proKontra.pro)||''})}/>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="meta-field meta-full">
+                    <div className="meta-label">📝 Notizen</div>
+                    <LocalTextarea className="meta-textarea" style={{minHeight:'90px'}} value={item.notizen||''} placeholder="Interne Notizen, nächste Schritte…" onChange={e=>upd(item.id,'notizen',e.target.value)}/>
+                  </div>
                   <div className="leistung-box">
                     <div className="leistung-header">
                       <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Zap size={9} color="#D4AF37"/> Leistungsdaten</div>
