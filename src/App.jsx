@@ -425,31 +425,8 @@ export default function FiveAsideMasterApp() {
           setDb(baseDb);
           dbLoaded.current = true;
 
-          // Load images separately into cache only — no setDb call to avoid duplicates
-          const { data: imgData } = await supabase.rpc('get_images');
-          if (imgData) {
-            Object.entries(imgData).forEach(([id, img]) => {
-              if (img) imageCache.current[id] = img;
-            });
-            // Update images in state once cleanly
-            setDb(prev => {
-              if (!prev) return prev;
-              const addImgs = (arr) => (arr||[]).map(item => ({
-                ...item,
-                image: imageCache.current[String(item.id)] || item.image || null
-              }));
-              return {
-                ...prev,
-                athletes: addImgs(prev.athletes),
-                brands: addImgs(prev.brands),
-                rightsholder: addImgs(prev.rightsholder),
-                fiveaside_athletes: addImgs(prev.fiveaside_athletes),
-                fiveaside_brands: addImgs(prev.fiveaside_brands),
-              };
-            });
-            // Mark images as loaded so realtime doesn't re-trigger
-            dbLoaded.current = true;
-          }
+          // Images loaded separately via get_images RPC - disabled to prevent duplicates
+          // Images are preserved in Supabase and shown when cards are opened
         }
       } catch(e) {
         console.error('Supabase:', e);
