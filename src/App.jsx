@@ -522,8 +522,10 @@ export default function FiveAsideMasterApp() {
   const list = (db||{})[listKey]||[];
   const item = list.find(i=>i.id===selectedId);
   const ranked = [...list].sort((a,b)=>{
-    const sk=cfg.map(c=>c.k);
-    return (b.scores[sk[1]]+b.scores[sk[2]])-(a.scores[sk[1]]+a.scores[sk[2]]);
+    // Sort by full Gesamtscore (average of all criteria)
+    const scoreA = cfg.reduce((s,c)=>s+(a.scores[c.k]||0),0)/cfg.length;
+    const scoreB = cfg.reduce((s,c)=>s+(b.scores[c.k]||0),0)/cfg.length;
+    return scoreB - scoreA;
   });
 
   const upd = (id, field, val) => {
