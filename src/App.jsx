@@ -425,25 +425,28 @@ export default function FiveAsideMasterApp() {
           setDb(baseDb);
           dbLoaded.current = true;
 
-          // Then load images separately and merge them in
+          // Load images separately into cache only — no setDb call to avoid duplicates
           const { data: imgData } = await supabase.rpc('get_images');
           if (imgData) {
             Object.entries(imgData).forEach(([id, img]) => {
               if (img) imageCache.current[id] = img;
             });
-            // Merge images into state
-            const mergeImages = (arr) => (arr||[]).map(item => ({
-              ...item,
-              image: imageCache.current[String(item.id)] || null
-            }));
-            setDb(prev => ({
-              ...prev,
-              athletes: mergeImages(prev.athletes),
-              brands: mergeImages(prev.brands),
-              rightsholder: mergeImages(prev.rightsholder),
-              fiveaside_athletes: mergeImages(prev.fiveaside_athletes),
-              fiveaside_brands: mergeImages(prev.fiveaside_brands),
-            }));
+            // Update images in state once cleanly
+            setDb(prev => {
+              if (!prev) return prev;
+              const addImgs = (arr) => (arr||[]).map(item => ({
+                ...item,
+                image: imageCache.current[String(item.id)] || item.image || null
+              }));
+              return {
+                ...prev,
+                athletes: addImgs(prev.athletes),
+                brands: addImgs(prev.brands),
+                rightsholder: addImgs(prev.rightsholder),
+                fiveaside_athletes: addImgs(prev.fiveaside_athletes),
+                fiveaside_brands: addImgs(prev.fiveaside_brands),
+              };
+            });
           }
         }
       } catch(e) {
@@ -460,20 +463,20 @@ export default function FiveAsideMasterApp() {
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'data_store'},
         p => {
           if (ignoringRealtime.current) return;
-          // Merge incoming data with current images — never lose images on realtime update
+          // On realtime update, restore images from cache
           setDb(current => {
             const incoming = {athletes:[],brands:[],rightsholder:[],fiveaside_athletes:[],fiveaside_brands:[],...p.new.content};
-            const mergeImgs = (newArr, oldArr) => (newArr||[]).map(item => {
-              const old = (oldArr||[]).find(o=>o.id===item.id);
-              return old?.image && !item.image ? {...item, image:old.image} : item;
-            });
+            const withImgs = (arr) => (arr||[]).map(item => ({
+              ...item,
+              image: item.image || imageCache.current[String(item.id)] || null
+            }));
             return {
               ...incoming,
-              athletes:           mergeImgs(incoming.athletes,           current?.athletes),
-              brands:             mergeImgs(incoming.brands,             current?.brands),
-              rightsholder:       mergeImgs(incoming.rightsholder,       current?.rightsholder),
-              fiveaside_athletes: mergeImgs(incoming.fiveaside_athletes, current?.fiveaside_athletes),
-              fiveaside_brands:   mergeImgs(incoming.fiveaside_brands,   current?.fiveaside_brands),
+              athletes:           withImgs(incoming.athletes),
+              brands:             withImgs(incoming.brands),
+              rightsholder:       withImgs(incoming.rightsholder),
+              fiveaside_athletes: withImgs(incoming.fiveaside_athletes),
+              fiveaside_brands:   withImgs(incoming.fiveaside_brands),
             };
           });
         })
