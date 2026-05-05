@@ -26,7 +26,7 @@ const RIGHTSHOLDER_CFG = BRAND_CFG.map(c=>({...c}));
 const LEAD_STATUSES = [
   { value:'neu',         label:'Neu / Prospect',       color:'#888',    bg:'rgba(136,136,136,0.12)' },
   { value:'kontaktiert', label:'Kontaktiert / Pitch',  color:'#3b82f6', bg:'rgba(59,130,246,0.12)'  },
-  { value:'verhandlung', label:'Verhandlung',           color:'#3b5345', bg:'rgba(59,83,69,0.15)'  },
+  { value:'verhandlung', label:'Verhandlung',           color:'#D4AF37', bg:'rgba(212,175,55,0.1)'  },
   { value:'aktiv',       label:'Abgeschlossen / Aktiv', color:'#22c55e', bg:'rgba(34,197,94,0.12)'   },
   { value:'hold',        label:'On Hold / Verloren',    color:'#ef4444', bg:'rgba(239,68,68,0.12)'   },
 ];
@@ -195,7 +195,7 @@ function InstaCard({ item, upd }) {
       )}
       {stats&&stats.followers==='N/A'&&handle&&(
         <div style={{padding:'0.6rem 1rem',fontSize:'0.58rem',color:'#666',textAlign:'center'}}>
-          Keine Daten für @{handle}{socialBladeUrl&&<a href={socialBladeUrl} target="_blank" rel="noopener noreferrer" style={{color:'#3b5345',textDecoration:'none',marginLeft:'0.4rem'}}>Social Blade ↗</a>}
+          Keine Daten für @{handle}{socialBladeUrl&&<a href={socialBladeUrl} target="_blank" rel="noopener noreferrer" style={{color:'#D4AF37',textDecoration:'none',marginLeft:'0.4rem'}}>Social Blade ↗</a>}
         </div>
       )}
     </div>
@@ -205,7 +205,7 @@ function InstaCard({ item, upd }) {
 // ── BRAND DEALS ──────────────────────────────────────────────────────────────
 const DEAL_STATUS_COLORS = {
   'Aktiv':        { color:'#22c55e', bg:'rgba(34,197,94,0.12)'  },
-  'In Verhandlung':{ color:'#3b5345', bg:'rgba(59,83,69,0.15)' },
+  'In Verhandlung':{ color:'#D4AF37', bg:'rgba(212,175,55,0.1)' },
   'Abgeschlossen':{ color:'#888',    bg:'rgba(136,136,136,0.12)'},
   'Geplant':      { color:'#3b82f6', bg:'rgba(59,130,246,0.12)' },
 };
@@ -220,12 +220,12 @@ function DealModal({ deal, onClose, onUpdate, onDelete }) {
         {/* Header */}
         <div style={{display:'flex',alignItems:'center',gap:'1rem',marginBottom:'1.4rem'}}>
           {d.logo
-            ? <img src={d.logo} alt={d.brandName} style={{width:48,height:48,borderRadius:'50%',objectFit:'contain',background:'#fff',padding:'4px',border:'2px solid rgba(59,83,69,0.3)'}}/>
-            : <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(59,83,69,0.2)',border:'2px solid rgba(59,83,69,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.1rem',fontWeight:700,color:'#3b5345',fontFamily:"'Barlow Condensed',sans-serif"}}>{(d.brandName||'?')[0].toUpperCase()}</div>
+            ? <img src={d.logo} alt={d.brandName} style={{width:48,height:48,borderRadius:'50%',objectFit:'contain',background:'#fff',padding:'4px',border:'2px solid rgba(212,175,55,0.3)'}}/>
+            : <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(212,175,55,0.15)',border:'2px solid rgba(212,175,55,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.1rem',fontWeight:700,color:'#D4AF37',fontFamily:"'Barlow Condensed',sans-serif"}}>{(d.brandName||'?')[0].toUpperCase()}</div>
           }
           <div style={{flex:1}}>
             <input value={d.brandName||''} onChange={e=>setD(p=>({...p,brandName:e.target.value}))}
-              style={{width:'100%',background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,0.1)',outline:'none',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'1.4rem',fontWeight:900,fontStyle:'italic',color:'#3b5345',padding:'0 0 0.2rem 0'}}
+              style={{width:'100%',background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,0.1)',outline:'none',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'1.4rem',fontWeight:900,fontStyle:'italic',color:'#D4AF37',padding:'0 0 0.2rem 0'}}
               placeholder="Markenname"/>
           </div>
           <button onClick={onClose} style={{background:'none',border:'none',color:'#666',cursor:'pointer',fontSize:'1.2rem',lineHeight:1,padding:0}}>✕</button>
@@ -274,7 +274,7 @@ function DealModal({ deal, onClose, onUpdate, onDelete }) {
         {/* Actions */}
         <div style={{display:'flex',gap:'0.6rem'}}>
           <button onClick={()=>onUpdate(d)}
-            style={{flex:1,background:'#3b5345',border:'none',color:'#000',padding:'0.6rem',borderRadius:'0.7rem',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.78rem',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',cursor:'pointer'}}>
+            style={{flex:1,background:'#D4AF37',border:'none',color:'#000',padding:'0.6rem',borderRadius:'0.7rem',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.78rem',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',cursor:'pointer'}}>
             Speichern
           </button>
           <button onClick={onDelete}
@@ -312,10 +312,10 @@ function BrandDealsSection({ item, upd }) {
       <div style={{gridColumn:'span 2',background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:'0.7rem',padding:'0.8rem 0.9rem'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.7rem'}}>
           <div style={{fontSize:'0.5rem',textTransform:'uppercase',letterSpacing:'0.32em',fontWeight:900,color:'#888',display:'flex',alignItems:'center',gap:'0.35rem'}}>
-            <span style={{color:'#3b5345'}}>◆</span> Kooperationen
+            <span style={{color:'#D4AF37'}}>◆</span> Kooperationen
           </div>
           <button onClick={newDeal}
-            style={{width:22,height:22,borderRadius:'50%',background:'rgba(59,83,69,0.2)',border:'1px solid rgba(59,83,69,0.35)',color:'#3b5345',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.85rem',fontWeight:700,lineHeight:1}}>
+            style={{width:22,height:22,borderRadius:'50%',background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.35)',color:'#D4AF37',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.85rem',fontWeight:700,lineHeight:1}}>
             +
           </button>
         </div>
@@ -447,6 +447,8 @@ export default function FiveAsideMasterApp() {
                 fiveaside_brands: addImgs(prev.fiveaside_brands),
               };
             });
+            // Mark images as loaded so realtime doesn't re-trigger
+            dbLoaded.current = true;
           }
         }
       } catch(e) {
@@ -463,21 +465,18 @@ export default function FiveAsideMasterApp() {
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'data_store'},
         p => {
           if (ignoringRealtime.current) return;
-          // On realtime update, restore images from cache
-          setDb(current => {
-            const incoming = {athletes:[],brands:[],rightsholder:[],fiveaside_athletes:[],fiveaside_brands:[],...p.new.content};
-            const withImgs = (arr) => (arr||[]).map(item => ({
-              ...item,
-              image: item.image || imageCache.current[String(item.id)] || null
-            }));
-            return {
-              ...incoming,
-              athletes:           withImgs(incoming.athletes),
-              brands:             withImgs(incoming.brands),
-              rightsholder:       withImgs(incoming.rightsholder),
-              fiveaside_athletes: withImgs(incoming.fiveaside_athletes),
-              fiveaside_brands:   withImgs(incoming.fiveaside_brands),
-            };
+          const incoming = {athletes:[],brands:[],rightsholder:[],fiveaside_athletes:[],fiveaside_brands:[],...p.new.content};
+          const withImgs = (arr) => (arr||[]).map(item => ({
+            ...item,
+            image: item.image || imageCache.current[String(item.id)] || null
+          }));
+          setDb({
+            ...incoming,
+            athletes: withImgs(incoming.athletes),
+            brands: withImgs(incoming.brands),
+            rightsholder: withImgs(incoming.rightsholder),
+            fiveaside_athletes: withImgs(incoming.fiveaside_athletes),
+            fiveaside_brands: withImgs(incoming.fiveaside_brands),
           });
         })
       .subscribe();
@@ -640,15 +639,15 @@ export default function FiveAsideMasterApp() {
 
   if (loading) return (
     <div style={{minHeight:'100vh',background:'#191919',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem'}}>
-      <RefreshCw color="#3b5345" size={36} style={{animation:'spin 1s linear infinite'}}/>
-      <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.4em',fontSize:'0.75rem',color:'#3b5345'}}>Connecting…</p>
+      <RefreshCw color="#D4AF37" size={36} style={{animation:'spin 1s linear infinite'}}/>
+      <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.4em',fontSize:'0.75rem',color:'#D4AF37'}}>Connecting…</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
   if (loadError||!db) return (
     <div style={{minHeight:'100vh',background:'#191919',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem'}}>
       <p style={{fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,color:'#ff3b3b',fontSize:'0.75rem',textTransform:'uppercase',letterSpacing:'0.3em'}}>Verbindungsfehler — Neu laden</p>
-      <button onClick={()=>window.location.reload()} style={{background:'#3b5345',border:'none',color:'#000',padding:'0.6rem 1.4rem',borderRadius:'0.6rem',fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontSize:'0.8rem',cursor:'pointer'}}>Neu laden</button>
+      <button onClick={()=>window.location.reload()} style={{background:'#D4AF37',border:'none',color:'#000',padding:'0.6rem 1.4rem',borderRadius:'0.6rem',fontFamily:'"Barlow Condensed",sans-serif',fontWeight:900,fontSize:'0.8rem',cursor:'pointer'}}>Neu laden</button>
     </div>
   );
 
@@ -662,24 +661,24 @@ export default function FiveAsideMasterApp() {
     .wrap{width:100%;max-width:1440px;margin:0 auto;padding:2rem 3rem;}
     .app-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 3rem;border-bottom:1px solid rgba(255,255,255,0.08);background:#191919;position:sticky;top:0;z-index:100;}
     .logo-img{height:160px;width:auto;object-fit:contain;cursor:pointer;}
-    .logo-fallback{font-family:'Barlow Condensed',sans-serif;font-size:2.8rem;font-weight:900;font-style:italic;color:#3b5345;text-transform:uppercase;cursor:pointer;line-height:1;}
+    .logo-fallback{font-family:'Barlow Condensed',sans-serif;font-size:2.8rem;font-weight:900;font-style:italic;color:#D4AF37;text-transform:uppercase;cursor:pointer;line-height:1;}
     .logo-sub{display:flex;align-items:center;gap:0.4rem;margin-top:0.3rem;}
     .dot{width:6px;height:6px;background:#2ecc71;border-radius:50%;animation:pulseDot 2s infinite;}
     @keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.4}}
     .logo-sub span{font-size:0.5rem;text-transform:uppercase;letter-spacing:0.4em;font-weight:700;color:#666;}
     .tab-switcher{display:flex;background:rgba(0,0,0,0.6);padding:0.3rem;border-radius:0.9rem;border:1px solid rgba(255,255,255,0.12);}
     .tab-btn{padding:0.6rem 1.5rem;border-radius:0.6rem;font-family:'Barlow Condensed',sans-serif;font-size:0.7rem;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:0.1em;border:none;cursor:pointer;transition:all 0.2s;color:#666;background:transparent;white-space:nowrap;}
-    .tab-btn.active{background:#3b5345;color:#fff;}
+    .tab-btn.active{background:#D4AF37;color:#000;}
     .tab-btn:not(.active):hover{color:#fff;}
     .sub-row{display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;margin-bottom:1rem;}
     .sub-switcher{display:inline-flex;background:rgba(0,0,0,0.4);padding:0.22rem;border-radius:0.7rem;border:1px solid rgba(255,255,255,0.08);}
     .sub-btn{padding:0.4rem 1.2rem;border-radius:0.48rem;font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:0.08em;border:none;cursor:pointer;transition:all 0.2s;color:#666;background:transparent;}
-    .sub-btn.active{background:rgba(59,83,69,0.2);color:#3b5345;border:1px solid rgba(59,83,69,0.3);}
+    .sub-btn.active{background:rgba(212,175,55,0.15);color:#D4AF37;border:1px solid rgba(212,175,55,0.3);}
     .sub-btn:not(.active):hover{color:#fff;}
     .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:900px;margin:5rem auto 0;}
     .home-card{background:#1E1E1E;border:1px solid rgba(255,255,255,0.14);border-radius:2.5rem;padding:4rem 2rem;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:all 0.25s;text-align:center;}
-    .home-card:hover{border-color:#3b5345;transform:translateY(-3px);}
-    .home-card:hover .hicon{color:#3b5345;transform:scale(1.1);}
+    .home-card:hover{border-color:#D4AF37;transform:translateY(-3px);}
+    .home-card:hover .hicon{color:#D4AF37;transform:scale(1.1);}
     .home-icon-wrap{width:80px;height:80px;background:#000;border-radius:1.2rem;display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;border:1px solid rgba(255,255,255,0.1);}
     .hicon{color:#444;transition:all 0.25s;}
     .home-card h3{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;font-style:italic;text-transform:uppercase;color:#fff;}
@@ -687,21 +686,21 @@ export default function FiveAsideMasterApp() {
     .grid-title{font-family:'Barlow Condensed',sans-serif;font-size:2.2rem;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-0.02em;color:#fff;}
     .quick-add-row{display:flex;gap:0.6rem;margin-bottom:1.5rem;align-items:center;}
     .quick-input{flex:1;max-width:380px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:0.8rem;padding:0.6rem 1rem;font-size:0.8rem;font-weight:600;color:#fff;outline:none;font-family:'Barlow',sans-serif;transition:border-color 0.2s;}
-    .quick-input:focus{border-color:#3b5345;}
+    .quick-input:focus{border-color:#D4AF37;}
     .quick-input::placeholder{color:#555;}
-    .btn-ai{display:flex;align-items:center;gap:0.4rem;background:linear-gradient(135deg,rgba(59,83,69,0.2),rgba(59,83,69,0.1));border:1px solid rgba(59,83,69,0.4);color:#3b5345;padding:0.6rem 1.2rem;border-radius:0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.73rem;font-weight:900;font-style:italic;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-    .btn-ai:hover{background:rgba(59,83,69,0.25);}
+    .btn-ai{display:flex;align-items:center;gap:0.4rem;background:linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.08));border:1px solid rgba(212,175,55,0.4);color:#D4AF37;padding:0.6rem 1.2rem;border-radius:0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.73rem;font-weight:900;font-style:italic;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+    .btn-ai:hover{background:rgba(212,175,55,0.25);}
     .btn-ai:disabled{opacity:0.5;cursor:not-allowed;}
-    .btn-add{display:flex;align-items:center;gap:0.5rem;background:#3b5345;color:#000;border:none;padding:0.6rem 1.3rem;border-radius:0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.76rem;font-weight:900;font-style:italic;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+    .btn-add{display:flex;align-items:center;gap:0.5rem;background:#D4AF37;color:#000;border:none;padding:0.6rem 1.3rem;border-radius:0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.76rem;font-weight:900;font-style:italic;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
     .btn-add:hover{background:#fff;}
     .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.3rem;}
     .item-card{background:#1E1E1E;border:1px solid rgba(255,255,255,0.14);border-radius:1.6rem;padding:1.2rem;cursor:pointer;transition:all 0.25s;position:relative;}
-    .item-card:hover{border-color:#3b5345;transform:translateY(-2px);}
-    .rank-badge{position:absolute;top:-10px;right:-10px;width:36px;height:36px;background:#ff8a00;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:0.78rem;color:#000;z-index:2;box-shadow:0 4px 16px rgba(255,138,0,0.4);}
+    .item-card:hover{border-color:#D4AF37;transform:translateY(-2px);}
+    .rank-badge{position:absolute;top:-10px;right:-10px;width:36px;height:36px;background:#D4AF37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:0.78rem;color:#000;z-index:2;box-shadow:0 4px 16px rgba(212,175,55,0.5);}
     .card-img{aspect-ratio:1;background:#111;border-radius:1.2rem;margin-bottom:0.9rem;overflow:hidden;border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;}
     .card-img img{width:100%;height:100%;object-fit:cover;}
     .card-name{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;font-style:italic;margin-bottom:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.2s;color:#fff;}
-    .item-card:hover .card-name{color:#3b5345;}
+    .item-card:hover .card-name{color:#D4AF37;}
     .card-sub{font-size:0.5rem;text-transform:uppercase;letter-spacing:0.18em;font-weight:700;color:#666;margin-bottom:0.5rem;}
     .card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.06);}
     .card-delete-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:0.3rem;font-size:0.45rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#5a1a1a;transition:color 0.2s;font-family:'Barlow',sans-serif;padding:0;}
@@ -711,32 +710,32 @@ export default function FiveAsideMasterApp() {
     @media(max-width:960px){.detail-wrap{grid-template-columns:1fr;}}
     .panel{background:#1E1E1E;border:1px solid rgba(255,255,255,0.14);border-radius:1.8rem;padding:1.7rem;}
     .back-btn{background:none;border:none;color:#666;cursor:pointer;display:flex;align-items:center;gap:0.4rem;font-size:0.53rem;font-weight:700;text-transform:uppercase;letter-spacing:0.28em;margin-bottom:1.1rem;transition:color 0.2s;font-family:'Barlow',sans-serif;}
-    .back-btn:hover{color:#3b5345;}
+    .back-btn:hover{color:#D4AF37;}
     .profile-row{display:flex;gap:1rem;align-items:flex-start;margin-bottom:0.8rem;}
     .avatar-wrap{position:relative;flex-shrink:0;}
     .avatar{width:88px;height:88px;background:#000;border-radius:1.2rem;overflow:hidden;border:2px solid rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;}
     .avatar img{width:100%;height:100%;object-fit:cover;}
     .avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.75);border-radius:1.2rem;display:flex;align-items:center;justify-content:center;opacity:0;cursor:pointer;transition:opacity 0.2s;}
     .avatar-wrap:hover .avatar-overlay{opacity:1;}
-    .name-input{width:100%;background:transparent;font-family:'Barlow Condensed',sans-serif;font-size:1.85rem;font-weight:900;font-style:italic;color:#3b5345;letter-spacing:-0.02em;border:none;border-bottom:1px solid rgba(255,255,255,0.1);outline:none;margin-bottom:0.3rem;padding-bottom:0.2rem;}
-    .name-input:focus{border-color:#3b5345;}
-    .ai-fill-btn{display:flex;align-items:center;gap:0.35rem;background:rgba(59,83,69,0.15);border:1px solid rgba(59,83,69,0.3);border-radius:0.4rem;padding:0.22rem 0.65rem;font-size:0.5rem;font-weight:700;color:#3b5345;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.2s;margin-top:0.3rem;}
-    .ai-fill-btn:hover{background:rgba(59,83,69,0.2);}
+    .name-input{width:100%;background:transparent;font-family:'Barlow Condensed',sans-serif;font-size:1.85rem;font-weight:900;font-style:italic;color:#D4AF37;letter-spacing:-0.02em;border:none;border-bottom:1px solid rgba(255,255,255,0.1);outline:none;margin-bottom:0.3rem;padding-bottom:0.2rem;}
+    .name-input:focus{border-color:#D4AF37;}
+    .ai-fill-btn{display:flex;align-items:center;gap:0.35rem;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:0.4rem;padding:0.22rem 0.65rem;font-size:0.5rem;font-weight:700;color:#D4AF37;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.2s;margin-top:0.3rem;}
+    .ai-fill-btn:hover{background:rgba(212,175,55,0.15);}
     .ai-fill-btn:disabled{opacity:0.5;cursor:not-allowed;}
     .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.55rem;margin-top:0.6rem;}
     .meta-field{display:flex;flex-direction:column;gap:0.22rem;}
     .meta-label{font-size:0.5rem;text-transform:uppercase;letter-spacing:0.22em;font-weight:700;color:#888;}
     .meta-input{background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:0.5rem;padding:0.38rem 0.65rem;font-size:0.76rem;font-weight:600;color:#fff;outline:none;font-family:'Barlow',sans-serif;transition:border-color 0.2s;width:100%;}
-    .meta-input:focus{border-color:#3b5345;color:#3b5345;}
+    .meta-input:focus{border-color:#D4AF37;color:#D4AF37;}
     .meta-textarea{background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:0.5rem;padding:0.45rem 0.65rem;font-size:0.76rem;font-weight:500;color:#fff;outline:none;font-family:'Barlow',sans-serif;transition:border-color 0.2s;width:100%;resize:vertical;min-height:75px;line-height:1.6;}
-    .meta-textarea:focus{border-color:#3b5345;color:#3b5345;}
+    .meta-textarea:focus{border-color:#D4AF37;color:#D4AF37;}
     .meta-full{grid-column:span 2;}
-    .ai-img-preview{grid-column:span 2;background:rgba(0,0,0,0.3);border:1px solid rgba(255,138,0,0.3);border-radius:0.6rem;padding:0.65rem;display:flex;gap:0.75rem;align-items:center;}
+    .ai-img-preview{grid-column:span 2;background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.25);border-radius:0.6rem;padding:0.65rem;display:flex;gap:0.75rem;align-items:center;}
     .ai-img-thumb{width:56px;height:56px;border-radius:0.5rem;object-fit:cover;border:1px solid rgba(255,255,255,0.1);flex-shrink:0;background:#111;}
     .leistung-box{grid-column:span 2;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:0.6rem;padding:0.65rem 0.85rem;}
     .leistung-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;}
-    .leistung-refresh{display:flex;align-items:center;gap:0.3rem;background:none;border:1px solid rgba(255,138,0,0.3);border-radius:0.35rem;padding:0.16rem 0.5rem;font-size:0.46rem;font-weight:700;color:#3b5345;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.2s;}
-    .leistung-refresh:hover{background:rgba(59,83,69,0.15);}
+    .leistung-refresh{display:flex;align-items:center;gap:0.3rem;background:none;border:1px solid rgba(212,175,55,0.25);border-radius:0.35rem;padding:0.16rem 0.5rem;font-size:0.46rem;font-weight:700;color:#D4AF37;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.2s;}
+    .leistung-refresh:hover{background:rgba(212,175,55,0.1);}
     .leistung-refresh:disabled{opacity:0.5;cursor:not-allowed;}
     .leistung-empty{font-size:0.6rem;color:#555;font-style:italic;}
     .img-pos-wrap{grid-column:span 2;display:flex;flex-direction:column;gap:0.5rem;}
@@ -751,18 +750,18 @@ export default function FiveAsideMasterApp() {
     .slider-sub-label{font-size:0.6rem;color:#fff;font-weight:500;opacity:0.5;}
     .slider-right{margin-left:auto;display:flex;align-items:baseline;gap:0.5rem;}
     .slider-pct{font-size:0.58rem;color:#888;font-weight:600;}
-    .slider-val{font-family:'Barlow Condensed',sans-serif;font-size:1.65rem;font-weight:900;font-style:italic;color:#ff8a00;line-height:1;}
+    .slider-val{font-family:'Barlow Condensed',sans-serif;font-size:1.65rem;font-weight:900;font-style:italic;color:#D4AF37;line-height:1;}
     .gesamtscore{background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:1.2rem;padding:1rem 1.2rem;margin-top:0.85rem;}
     .gs-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;}
     .gs-title{font-size:0.48rem;font-weight:900;text-transform:uppercase;letter-spacing:0.32em;color:#888;}
     .gs-grade{font-family:'Barlow Condensed',sans-serif;font-size:2.2rem;font-weight:900;font-style:italic;color:rgba(255,255,255,0.07);line-height:1;}
-    .gs-score{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;font-style:italic;color:#ff8a00;line-height:1;}
+    .gs-score{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;font-style:italic;color:#D4AF37;line-height:1;}
     .gs-score span{font-size:0.82rem;color:#888;font-style:normal;}
     .gs-bars{display:flex;flex-direction:column;gap:0.36rem;}
     .gs-bar-row{display:flex;align-items:center;gap:0.5rem;}
     .gs-bar-key{font-size:0.48rem;font-weight:700;text-transform:uppercase;color:#888;width:17px;flex-shrink:0;}
     .gs-bar-track{flex:1;height:3px;background:#000;border-radius:999px;overflow:hidden;}
-    .gs-bar-fill{height:100%;background:#3b5345;border-radius:999px;transition:width 0.5s ease;}
+    .gs-bar-fill{height:100%;background:#D4AF37;border-radius:999px;transition:width 0.5s ease;}
     .right-col{display:flex;flex-direction:column;gap:1rem;}
     .matrix-panel{background:#1E1E1E;border:1px solid rgba(255,255,255,0.14);border-radius:1.8rem;padding:1.4rem;flex:1;display:flex;flex-direction:column;}
     .matrix-header{font-size:0.48rem;font-weight:900;text-transform:uppercase;letter-spacing:0.38em;color:#888;margin-bottom:0.9rem;}
@@ -775,24 +774,24 @@ export default function FiveAsideMasterApp() {
     .mline-center-h{position:absolute;top:50%;left:0;right:0;border-top:1px solid rgba(255,255,255,0.1);}
     .mline-center-v{position:absolute;left:50%;top:0;bottom:0;border-left:1px solid rgba(255,255,255,0.1);}
     .quad-label{position:absolute;font-size:0.5rem;font-weight:600;text-align:center;line-height:1.4;pointer-events:none;white-space:pre-line;}
-    .matrix-dot{position:absolute;width:17px;height:17px;background:#ff8a00;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #000;box-shadow:0 0 28px rgba(255,138,0,0.8);transition:left 0.6s cubic-bezier(0.34,1.56,0.64,1),top 0.6s cubic-bezier(0.34,1.56,0.64,1);z-index:10;}
+    .matrix-dot{position:absolute;width:17px;height:17px;background:#D4AF37;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #000;box-shadow:0 0 28px rgba(212,175,55,0.8);transition:left 0.6s cubic-bezier(0.34,1.56,0.64,1),top 0.6s cubic-bezier(0.34,1.56,0.64,1);z-index:10;}
     @keyframes ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.2);opacity:0}}
-    .matrix-dot::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid rgba(255,138,0,0.3);animation:ring 2s infinite;}
+    .matrix-dot::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid rgba(212,175,55,0.25);animation:ring 2s infinite;}
     .x-ticks{display:flex;justify-content:space-between;padding:0.22rem 0 0;}
     .tick{font-size:0.42rem;color:rgba(255,255,255,0.16);font-weight:600;}
     .x-axis-label{text-align:center;font-size:0.46rem;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#888;margin-top:0.35rem;}
     .matrix-bottom-bar{display:flex;gap:1rem;padding:0.65rem 0.9rem;background:rgba(0,0,0,0.5);border-radius:0.8rem;margin-top:0.7rem;border:1px solid rgba(255,255,255,0.1);flex-wrap:wrap;align-items:center;}
     .mbb-item{display:flex;align-items:center;gap:0.35rem;}
     .mbb-label{font-size:0.45rem;font-weight:700;text-transform:uppercase;letter-spacing:0.25em;color:#888;}
-    .mbb-val{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:900;font-style:italic;color:#3b5345;}
-    .qh-box{margin-left:auto;background:#111;border:1px solid rgba(59,83,69,0.3);border-radius:0.6rem;padding:0.5rem 0.75rem;}
-    .qh-title{font-size:0.52rem;font-weight:900;text-transform:uppercase;color:#3b5345;margin-bottom:0.1rem;}
+    .mbb-val{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:900;font-style:italic;color:#D4AF37;}
+    .qh-box{margin-left:auto;background:#111;border:1px solid rgba(212,175,55,0.3);border-radius:0.6rem;padding:0.5rem 0.75rem;}
+    .qh-title{font-size:0.52rem;font-weight:900;text-transform:uppercase;color:#D4AF37;margin-bottom:0.1rem;}
     .qh-desc{font-size:0.52rem;color:#aaa;line-height:1.4;max-width:200px;}
     .btn-delete-detail{background:none;border:none;color:#5a1a1a;display:flex;align-items:center;gap:0.4rem;font-size:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;cursor:pointer;transition:color 0.2s;font-family:'Barlow',sans-serif;align-self:flex-end;margin-top:0.4rem;}
     .btn-delete-detail:hover{color:#ff3b3b;}
-    input[type=range]{width:100%;height:3px;background:#000;border-radius:999px;outline:none;cursor:pointer;-webkit-appearance:none;accent-color:#3b5345;}
-    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#3b5345;border:2px solid #000;box-shadow:0 0 8px rgba(255,138,0,0.5);}
-    .ai-loading-bar{grid-column:span 2;display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.85rem;background:rgba(59,83,69,0.08);border:1px solid rgba(59,83,69,0.2);border-radius:0.6rem;font-size:0.6rem;color:#3b5345;font-weight:600;}
+    input[type=range]{width:100%;height:3px;background:#000;border-radius:999px;outline:none;cursor:pointer;-webkit-appearance:none;accent-color:#D4AF37;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#D4AF37;border:2px solid #000;box-shadow:0 0 8px rgba(212,175,55,0.5);}
+    .ai-loading-bar{grid-column:span 2;display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.85rem;background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.15);border-radius:0.6rem;font-size:0.6rem;color:#D4AF37;font-weight:600;}
     .section-divider{grid-column:span 2;border:none;border-top:1px solid rgba(255,255,255,0.06);margin:0.3rem 0;}
   `;
 
@@ -844,9 +843,9 @@ export default function FiveAsideMasterApp() {
           <div className="ai-img-preview" style={{marginTop:'0.5rem'}}>
             <img src={item.aiImageUrl} className="ai-img-thumb" alt="" onError={e=>e.target.style.display='none'}/>
             <div style={{flex:1}}>
-              <div style={{fontSize:'0.5rem',color:'#3b5345',fontWeight:700,textTransform:'uppercase',marginBottom:'0.3rem'}}>KI-Bild Vorschlag</div>
+              <div style={{fontSize:'0.5rem',color:'#D4AF37',fontWeight:700,textTransform:'uppercase',marginBottom:'0.3rem'}}>KI-Bild Vorschlag</div>
               <div style={{display:'flex',gap:'0.5rem',marginTop:'0.3rem'}}>
-                <button onClick={()=>fileInputRef.current.click()} style={{background:'#3b5345',border:'none',color:'#000',padding:'0.2rem 0.6rem',borderRadius:'0.3rem',fontSize:'0.5rem',fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>Eigenes</button>
+                <button onClick={()=>fileInputRef.current.click()} style={{background:'#D4AF37',border:'none',color:'#000',padding:'0.2rem 0.6rem',borderRadius:'0.3rem',fontSize:'0.5rem',fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>Eigenes</button>
                 <button onClick={()=>upd(item.id,'aiImageUrl','')} style={{background:'none',border:'1px solid rgba(255,255,255,0.12)',color:'#666',padding:'0.2rem 0.6rem',borderRadius:'0.3rem',fontSize:'0.5rem',fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>Verwerfen</button>
               </div>
             </div>
@@ -892,7 +891,7 @@ export default function FiveAsideMasterApp() {
               {[20,40,60,80].map(p=><div key={'h'+p} className="mline-h" style={{top:p+'%'}}/>)}
               {[20,40,60,80].map(p=><div key={'v'+p} className="mline-v" style={{left:p+'%'}}/>)}
               <div className="mline-center-h"/><div className="mline-center-v"/>
-              {QUADRANTS.map(q=><div key={q.id} className="quad-label" style={{left:q.sx,top:q.sy,transform:'translate(-50%,-50%)',color:q.id===qid?'rgba(59,83,69,0.8)':'rgba(255,255,255,0.15)',fontWeight:q.id===qid?700:500}}>{q.label}</div>)}
+              {QUADRANTS.map(q=><div key={q.id} className="quad-label" style={{left:q.sx,top:q.sy,transform:'translate(-50%,-50%)',color:q.id===qid?'rgba(212,175,55,0.65)':'rgba(255,255,255,0.15)',fontWeight:q.id===qid?700:500}}>{q.label}</div>)}
               <div className="matrix-dot" style={{left:clamp(dotX)+'%',top:clamp(dotY)+'%'}}/>
             </div>
             <div className="x-ticks">{[0,2,4,6,8,10].map(n=><span key={n} className="tick">{n}</span>)}</div>
@@ -955,7 +954,7 @@ export default function FiveAsideMasterApp() {
             a.download = 'fiveaside-backup-' + new Date().toISOString().split('T')[0] + '.json';
             a.click();
             URL.revokeObjectURL(url);
-          }} style={{background:'rgba(59,83,69,0.2)',border:'1px solid rgba(59,83,69,0.4)',color:'#3b5345',padding:'0.4rem 0.9rem',borderRadius:'0.6rem',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.65rem',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.08em',cursor:'pointer',whiteSpace:'nowrap'}}>
+          }} style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.4)',color:'#D4AF37',padding:'0.4rem 0.9rem',borderRadius:'0.6rem',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.65rem',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.08em',cursor:'pointer',whiteSpace:'nowrap'}}>
             ↓ Backup
           </button>
         </div>
@@ -1080,7 +1079,7 @@ export default function FiveAsideMasterApp() {
                   <MF label="Erfolge / Referenzen" field="erfolge" full area placeholder="Wichtige Meilensteine, Awards, Cases…"/>
                   <div className="leistung-box">
                     <div className="leistung-header">
-                      <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><BarChart2 size={9} color="#3b5345"/> Kennzahlen</div>
+                      <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><BarChart2 size={9} color="#D4AF37"/> Kennzahlen</div>
                       <button className="leistung-refresh" onClick={()=>refreshLeistung(item.id)} disabled={!!leistungLoading[item.id]}>
                         {leistungLoading[item.id]?<><Loader size={8} style={{animation:'spin 1s linear infinite'}}/> Lädt…</>:<><RefreshCw size={8}/> KI-Update</>}
                       </button>
@@ -1096,7 +1095,7 @@ export default function FiveAsideMasterApp() {
                     <div className="img-pos-wrap">
                       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                         <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Move size={9} color="#888"/> Bildausschnitt</div>
-                        <button onClick={()=>setImgAdjusted(p=>({...p,[item.id]:true}))} style={{background:'rgba(59,83,69,0.2)',border:'1px solid rgba(59,83,69,0.3)',borderRadius:'0.35rem',padding:'0.18rem 0.6rem',fontSize:'0.5rem',fontWeight:700,color:'#3b5345',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>✓ Fertig</button>
+                        <button onClick={()=>setImgAdjusted(p=>({...p,[item.id]:true}))} style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.3)',borderRadius:'0.35rem',padding:'0.18rem 0.6rem',fontSize:'0.5rem',fontWeight:700,color:'#D4AF37',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>✓ Fertig</button>
                       </div>
                       <div className="img-preview-box"><img src={item.image} alt="preview" style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/></div>
                       <div className="img-pos-controls">
@@ -1144,7 +1143,7 @@ export default function FiveAsideMasterApp() {
                   </div>
                   <div className="leistung-box">
                     <div className="leistung-header">
-                      <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Zap size={9} color="#3b5345"/> Leistungsdaten</div>
+                      <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Zap size={9} color="#D4AF37"/> Leistungsdaten</div>
                       <button className="leistung-refresh" onClick={()=>refreshLeistung(item.id)} disabled={!!leistungLoading[item.id]}>
                         {leistungLoading[item.id]?<><Loader size={8} style={{animation:'spin 1s linear infinite'}}/> Lädt…</>:<><RefreshCw size={8}/> KI-Update</>}
                       </button>
@@ -1158,7 +1157,7 @@ export default function FiveAsideMasterApp() {
                     <div className="img-pos-wrap">
                       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                         <div className="meta-label" style={{display:'flex',alignItems:'center',gap:'0.3rem'}}><Move size={9} color="#888"/> Bildausschnitt</div>
-                        <button onClick={()=>setImgAdjusted(p=>({...p,[item.id]:true}))} style={{background:'rgba(59,83,69,0.2)',border:'1px solid rgba(59,83,69,0.3)',borderRadius:'0.35rem',padding:'0.18rem 0.6rem',fontSize:'0.5rem',fontWeight:700,color:'#3b5345',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>✓ Fertig</button>
+                        <button onClick={()=>setImgAdjusted(p=>({...p,[item.id]:true}))} style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.3)',borderRadius:'0.35rem',padding:'0.18rem 0.6rem',fontSize:'0.5rem',fontWeight:700,color:'#D4AF37',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase'}}>✓ Fertig</button>
                       </div>
                       <div className="img-preview-box"><img src={item.image} alt="preview" style={{objectPosition:`${item.imgX??50}% ${item.imgY??50}%`}}/></div>
                       <div className="img-pos-controls">
