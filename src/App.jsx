@@ -477,38 +477,22 @@ export default function FiveAsideMasterApp() {
   const dbRef = useRef(null);
 
   const sync = (newDb) => {
-    dbRef.current = newDb; // Always update ref with latest state
+    dbRef.current = newDb;
     setDb(newDb);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       if (!dbLoaded.current || !rowId.current) return;
-      // Use dbRef.current — the LATEST state, not stale closure
       const latest = dbRef.current;
       try {
         ignoringRealtime.current = true;
-        const compressList = async arr => {
-          if (!arr) return [];
-          return Promise.all(arr.map(async item => {
-            if (!item.image || item.image.length <= 20000) return item;
-            return {...item, image: await compressForSave(item.image)};
-          }));
-        };
-        const safeDb = {
-          ...latest,
-          athletes:            await compressList(latest.athletes),
-          brands:              await compressList(latest.brands),
-          rightsholder:        await compressList(latest.rightsholder),
-          fiveaside_athletes:  await compressList(latest.fiveaside_athletes),
-          fiveaside_brands:    await compressList(latest.fiveaside_brands),
-        };
-        await supabase.from('data_store').update({ content: safeDb }).eq('id', rowId.current);
-        // IMPORTANT: Do NOT call setDb here — never overwrite latest local state
-        setTimeout(() => { ignoringRealtime.current = false; }, 4000);
+        // Save directly — no async compression here, images already compressed at upload time
+        await supabase.from('data_store').update({ content: latest }).eq('id', rowId.current);
+        setTimeout(() => { ignoringRealtime.current = false; }, 3000);
       } catch(e) {
         console.error('Save error:', e);
         ignoringRealtime.current = false;
       }
-    }, 1200);
+    }, 800);
   };
 
   const getListKey = () => {
@@ -527,7 +511,14 @@ export default function FiveAsideMasterApp() {
 
   const list = (db||{})[listKey]||[];
   const item = list.find(i=>i.id===selectedId);
-  const ranked = [...list].sort((a,b)=>{ const sk=cfg.map(c=>c.k); return (b.scores[sk[1]]+b.scores[sk[2]])-(a.scores[sk[1]]+a.scores[sk[2]]); });
+  const ranked = [...list].sort((a,b)=>{
+    // Sort by name so duplicates appear side by side — easy to delete manually
+    const na=(a.name||'').toLowerCase(), nb=(b.name||'').toLowerCase();
+    if (na<nb) return -1; if (na>nb) return 1;
+    // Within same name: entry with image comes first
+    const ai=a.image?1:0, bi=b.image?1:0;
+    return bi-ai;
+  });
 
   const upd = (id, field, val) => {
     const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,[field]:val}:i);
@@ -790,11 +781,11 @@ export default function FiveAsideMasterApp() {
                 const img=new Image();
                 img.onload=()=>{
                   const canvas=document.createElement('canvas');
-                  const ratio=Math.min(300/img.width,300/img.height,1);
+                  const ratio=Math.min(200/img.width,200/img.height,1);
                   canvas.width=Math.round(img.width*ratio);
                   canvas.height=Math.round(img.height*ratio);
                   canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.45));
+                  upd(item.id,'image',canvas.toDataURL('image/jpeg',0.4));
                   setImgAdjusted(p=>({...p,[item.id]:false}));
                 };
                 img.src=rd.result;
