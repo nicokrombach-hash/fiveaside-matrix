@@ -418,15 +418,8 @@ export default function FiveAsideMasterApp() {
         if (error) throw error;
         if (data) {
           rowId.current = data.id;
-          // Load data without images first (fast, no size limit)
-          const { data: noImgData, error: noImgErr } = await supabase.rpc('get_data_no_images');
-          if (noImgErr) throw noImgErr;
-          const baseDb = { athletes:[], brands:[], rightsholder:[], fiveaside_athletes:[], fiveaside_brands:[], ...noImgData };
-          setDb(baseDb);
+          setDb({ athletes:[], brands:[], rightsholder:[], fiveaside_athletes:[], fiveaside_brands:[], ...data.content });
           dbLoaded.current = true;
-
-          // Images loaded separately via get_images RPC - disabled to prevent duplicates
-          // Images are preserved in Supabase and shown when cards are opened
         }
       } catch(e) {
         console.error('Supabase:', e);
