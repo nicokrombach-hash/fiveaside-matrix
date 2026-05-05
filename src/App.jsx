@@ -405,6 +405,7 @@ export default function FiveAsideMasterApp() {
 
   const ignoringRealtime = useRef(false);
   const dbLoaded = useRef(false); // Guard: never save before DB is loaded
+  const imageCache = useRef({}); // Cache images separately to avoid payload size issues
 
   useEffect(() => {
     let done = false;
@@ -417,7 +418,25 @@ export default function FiveAsideMasterApp() {
         if (error) throw error;
         if (data) {
           rowId.current = data.id;
-          setDb({ athletes:[], brands:[], rightsholder:[], fiveaside_athletes:[], fiveaside_brands:[], ...data.content });
+          // Strip images from initial load to keep payload small (all athletes visible)
+          // Images are cached separately and restored when needed
+          const raw = { athletes:[], brands:[], rightsholder:[], fiveaside_athletes:[], fiveaside_brands:[], ...data.content };
+          const stripAndCache = (arr) => (arr||[]).map(item => {
+            if (item.image) {
+              imageCache.current[item.id] = item.image; // Cache image by ID
+            }
+            const {image, ...rest} = item;
+            return {...rest, image: imageCache.current[item.id] || null};
+          });
+          const loadedDb = {
+            ...raw,
+            athletes: stripAndCache(raw.athletes),
+            brands: stripAndCache(raw.brands),
+            rightsholder: stripAndCache(raw.rightsholder),
+            fiveaside_athletes: stripAndCache(raw.fiveaside_athletes),
+            fiveaside_brands: stripAndCache(raw.fiveaside_brands),
+          };
+          setDb(loadedDb);
           dbLoaded.current = true; // DB loaded — saves now allowed
         }
       } catch(e) {
@@ -485,8 +504,20 @@ export default function FiveAsideMasterApp() {
       const latest = dbRef.current;
       try {
         ignoringRealtime.current = true;
-        // Save directly — no async compression here, images already compressed at upload time
-        await supabase.from('data_store').update({ content: latest }).eq('id', rowId.current);
+        // Restore images from cache before saving so they're never lost
+        const restoreImgs = (arr) => (arr||[]).map(item => ({
+          ...item,
+          image: item.image || imageCache.current[item.id] || null
+        }));
+        const dbWithImages = {
+          ...latest,
+          athletes: restoreImgs(latest.athletes),
+          brands: restoreImgs(latest.brands),
+          rightsholder: restoreImgs(latest.rightsholder),
+          fiveaside_athletes: restoreImgs(latest.fiveaside_athletes),
+          fiveaside_brands: restoreImgs(latest.fiveaside_brands),
+        };
+        await supabase.from('data_store').update({ content: dbWithImages }).eq('id', rowId.current);
         setTimeout(() => { ignoringRealtime.current = false; }, 3000);
       } catch(e) {
         console.error('Save error:', e);
@@ -521,6 +552,7 @@ export default function FiveAsideMasterApp() {
   });
 
   const upd = (id, field, val) => {
+    if (field === 'image') imageCache.current[id] = val; // Cache image
     const nl=((db||{})[listKey]||[]).map(i=>i.id===id?{...i,[field]:val}:i);
     sync({...db,[listKey]:nl});
   };
@@ -900,12 +932,27 @@ export default function FiveAsideMasterApp() {
           <div className="logo-fallback" style={{display:'none'}}>Five Aside</div>
           <div className="logo-sub"><div className="dot"/><span>Cloud Matrix Live</span></div>
         </div>
-        {activeTab!=='home'&&(
-          <div className="tab-switcher">
-            <button className={'tab-btn'+(activeTab==='athletes'?' active':'')} onClick={()=>{setActiveTab('athletes');setView('grid');}}>Athlete Matrix</button>
-            <button className={'tab-btn'+(activeTab==='brands'?' active':'')} onClick={()=>{setActiveTab('brands');setView('grid');}}>Brands / Rightsholder</button>
-          </div>
-        )}
+        <div style={{display:'flex',alignItems:'center',gap:'0.8rem'}}>
+          {activeTab!=='home'&&(
+            <div className="tab-switcher">
+              <button className={'tab-btn'+(activeTab==='athletes'?' active':'')} onClick={()=>{setActiveTab('athletes');setView('grid');}}>Athlete Matrix</button>
+              <button className={'tab-btn'+(activeTab==='brands'?' active':'')} onClick={()=>{setActiveTab('brands');setView('grid');}}>Brands / Rightsholder</button>
+            </div>
+          )}
+          <button onClick={()=>{
+            // Export ALL data including images directly from browser state
+            const dataToExport = dbRef.current || db;
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {type:'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fiveaside-backup-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+          }} style={{background:'rgba(212,175,55,0.15)',border:'1px solid rgba(212,175,55,0.4)',color:'#D4AF37',padding:'0.4rem 0.9rem',borderRadius:'0.6rem',fontFamily:"'Barlow Condensed',sans-serif",fontSize:'0.65rem',fontWeight:900,fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.08em',cursor:'pointer',whiteSpace:'nowrap'}}>
+            ↓ Backup
+          </button>
+        </div>
       </header>
 
       <div className="wrap">
