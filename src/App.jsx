@@ -418,26 +418,33 @@ export default function FiveAsideMasterApp() {
         if (error) throw error;
         if (data) {
           rowId.current = data.id;
-          // Strip images from initial load to keep payload small (all athletes visible)
-          // Images are cached separately and restored when needed
-          const raw = { athletes:[], brands:[], rightsholder:[], fiveaside_athletes:[], fiveaside_brands:[], ...data.content };
-          const stripAndCache = (arr) => (arr||[]).map(item => {
-            if (item.image) {
-              imageCache.current[item.id] = item.image; // Cache image by ID
-            }
-            const {image, ...rest} = item;
-            return {...rest, image: imageCache.current[item.id] || null};
-          });
-          const loadedDb = {
-            ...raw,
-            athletes: stripAndCache(raw.athletes),
-            brands: stripAndCache(raw.brands),
-            rightsholder: stripAndCache(raw.rightsholder),
-            fiveaside_athletes: stripAndCache(raw.fiveaside_athletes),
-            fiveaside_brands: stripAndCache(raw.fiveaside_brands),
-          };
-          setDb(loadedDb);
-          dbLoaded.current = true; // DB loaded — saves now allowed
+          // Load data without images first (fast, no size limit)
+          const { data: noImgData, error: noImgErr } = await supabase.rpc('get_data_no_images');
+          if (noImgErr) throw noImgErr;
+          const baseDb = { athletes:[], brands:[], rightsholder:[], fiveaside_athletes:[], fiveaside_brands:[], ...noImgData };
+          setDb(baseDb);
+          dbLoaded.current = true;
+
+          // Then load images separately and merge them in
+          const { data: imgData } = await supabase.rpc('get_images');
+          if (imgData) {
+            Object.entries(imgData).forEach(([id, img]) => {
+              if (img) imageCache.current[id] = img;
+            });
+            // Merge images into state
+            const mergeImages = (arr) => (arr||[]).map(item => ({
+              ...item,
+              image: imageCache.current[String(item.id)] || null
+            }));
+            setDb(prev => ({
+              ...prev,
+              athletes: mergeImages(prev.athletes),
+              brands: mergeImages(prev.brands),
+              rightsholder: mergeImages(prev.rightsholder),
+              fiveaside_athletes: mergeImages(prev.fiveaside_athletes),
+              fiveaside_brands: mergeImages(prev.fiveaside_brands),
+            }));
+          }
         }
       } catch(e) {
         console.error('Supabase:', e);
